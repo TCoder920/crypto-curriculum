@@ -318,16 +318,66 @@ docker-compose logs -f
 **Total Curriculum:** 49+ hours of instruction across 4 tracks
 
 ### 📋 Phase 2: Development - READY TO START
-- [ ] Initialize frontend (Vite + React + MUI + Liquid Glass UI)
-- [ ] Initialize backend (FastAPI + PostgreSQL)
-- [ ] Implement database models and migrations
-- [ ] Build authentication system
-- [ ] Create core API endpoints
-- [ ] Develop frontend components
-- [ ] Integrate curriculum content
-- [ ] Create assessment system (170 questions/tasks)
-- [ ] Build AI trading bot framework
-- [ ] Testing and QA
+
+**Comprehensive Development Roadmap:** See [Development Roadmap](docs/guides/development-roadmap.md) for detailed 12-week plan
+
+#### Foundation (Weeks 1-2)
+- [ ] Initialize frontend (Vite + React + MUI + Liquid Glass UI + Framer Motion)
+- [ ] Initialize backend (FastAPI + PostgreSQL + SQLAlchemy)
+- [ ] Implement complete database schema (17 tables)
+- [ ] Build JWT authentication with role-based access
+- [ ] Set up development environment
+
+#### Student Core Features (Weeks 3-4)
+- [ ] Module and lesson display system
+- [ ] Progress tracking dashboard
+- [ ] Auto-graded assessments (MC, T/F)
+- [ ] Student progress visualization
+- [ ] Responsive Liquid Glass UI implementation
+
+#### Instructor Features (Week 5)
+- [ ] Instructor dashboard with analytics
+- [ ] Cohort management (create, enroll, assign)
+- [ ] Manual grading interface with rubrics
+- [ ] Student monitoring and at-risk detection
+- [ ] Grade export and reporting
+
+#### Code Submission & Review (Week 6)
+- [ ] GitHub integration for code submissions
+- [ ] Code viewer with syntax highlighting
+- [ ] Instructor code review tools with inline comments
+- [ ] Rubric-based grading for coding tasks
+- [ ] Peer review system (anonymous, structured)
+- [ ] Submission versioning and revision workflow
+
+#### Communication & Collaboration (Week 7)
+- [ ] Discussion forums (module-specific)
+- [ ] Forum posts, replies, upvoting
+- [ ] Built-in AI learning assistant
+- [ ] Notification system
+- [ ] Email notifications (configurable)
+
+#### Gamification & Engagement (Week 8)
+- [ ] Achievement and badge system (20+ badges)
+- [ ] Student portfolio showcase
+- [ ] Leaderboard (opt-in, privacy-focused)
+- [ ] Advanced analytics for students and instructors
+
+#### AI Trading Bot Integration (Week 9)
+- [ ] Bot configuration interface
+- [ ] Backtesting system with historical data
+- [ ] Paper trading simulation
+- [ ] Performance analytics dashboard
+- [ ] Strategy comparison tools
+
+#### Polish & Content (Weeks 10-12)
+- [ ] Create 170 assessment questions
+- [ ] Import all curriculum content
+- [ ] Comprehensive testing (unit, integration, E2E)
+- [ ] UI/UX refinement across all screens
+- [ ] Accessibility audit (WCAG 2.1 AA)
+- [ ] Beta testing with real students
+- [ ] Documentation completion
 
 ### 🚀 Phase 3: Deployment - UPCOMING
 - [ ] CI/CD pipeline setup
@@ -345,9 +395,11 @@ docker-compose logs -f
 - [Development Workflow](docs/guides/development-workflow.md) - Git workflow and best practices
 
 ### Architecture & Design
-- [Database Schema](docs/architecture/database-schema.md) - Complete database design and ERD
+- [Database Schema](docs/architecture/database-schema.md) - Complete database design (17 tables) and ERD
+- [Educational Framework](docs/architecture/educational-framework.md) - Multi-instructor/student pedagogy and features
 - [Component Hierarchy](docs/architecture/component-hierarchy.md) - React component structure
 - [API Endpoints](docs/api/endpoints.md) - Complete API reference
+- [Development Roadmap](docs/guides/development-roadmap.md) - 12-week development plan
 
 ### Configuration
 - [Frontend .env Template](docs/templates/frontend.env.example) - Frontend environment variables
