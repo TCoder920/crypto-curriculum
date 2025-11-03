@@ -9,7 +9,7 @@ You are a specialized database design agent focused on creating SQLAlchemy model
 ## Application Scope
 
 **Database Purpose:** Learning Management System for content delivery
-- ✅ 12 core tables for LMS functionality
+- ✅ 16 core tables for LMS functionality
 - ✅ Content (Modules, Lessons, Assessments)
 - ✅ User management (Users, Roles, Cohorts)
 - ✅ Progress tracking and analytics
@@ -20,7 +20,7 @@ You are a specialized database design agent focused on creating SQLAlchemy model
 - ❌ Students code externally
 
 ## Tech Stack
-- PostgreSQL 15+ on **Google Cloud SQL**
+- PostgreSQL 15+ (local for Phase 2, Cloud SQL in Phase 3)
 - SQLAlchemy 2.0+ (async for performance)
 - Alembic for migrations
 - psycopg2-binary (PostgreSQL driver)
@@ -28,7 +28,7 @@ You are a specialized database design agent focused on creating SQLAlchemy model
 
 ## Schema Reference
 Complete schema documented at: `docs/architecture/database-schema.md`  
-**Total Tables:** 12 (Users, Modules, Lessons, Assessments, UserProgress, QuizAttempts, Cohorts, CohortMembers, ForumPosts, ForumVotes, Achievements, UserAchievements, LearningResources)
+**Core Tables:** Users, Modules, Lessons, Assessments, UserProgress, QuizAttempts, Cohorts, CohortMembers, CohortDeadlines, Announcements, ForumPosts, ForumVotes, Achievements, UserAchievements, Leaderboards, LearningResources, Notifications, ChatMessages
 
 ## Core Principles
 

@@ -1,8 +1,7 @@
 # Complete Development Checklist
 
 **Project:** Crypto Curriculum Platform (LMS)  
-**Target:** Production-ready Learning Management System on Google Cloud Platform  
-**Timeline:** 12 weeks from start to production launch
+**Target:** Phase 2 local-first LMS (cloud deployment deferred to Phase 3)  
 
 ---
 
@@ -10,7 +9,7 @@
 
 ### Documentation & Planning
 - [x] Complete curriculum content (Parts 1-4, 17 modules)
-- [x] Database schema design (12 tables)
+- [x] Database schema design (16 tables)
 - [x] API endpoint specifications
 - [x] Component hierarchy and architecture
 - [x] Educational framework design
@@ -21,55 +20,31 @@
 
 ---
 
-## 🚀 PHASE 2: FOUNDATION (Weeks 1-2)
+## 🚀 PHASE 2: LOCAL FOUNDATION
 
-### 2.1 Google Cloud Platform Setup
-- [ ] Create Google Cloud account
-- [ ] Apply for Google for Nonprofits
-- [ ] Submit 501(c)(3) documentation
-- [ ] Wait for approval (2-4 weeks)
-- [ ] Activate $3,000/year cloud credits
-- [ ] Create GCP project: `crypto-curriculum-prod`
-- [ ] Create GCP project: `crypto-curriculum-dev`
-- [ ] Enable billing with alerts ($25, $50, $100)
-- [ ] Enable required APIs:
-  - [ ] Cloud Run API
-  - [ ] Cloud SQL Admin API
-  - [ ] Cloud Build API
-  - [ ] Secret Manager API
-  - [ ] Cloud Storage API
-  - [ ] Cloud Logging API
-  - [ ] Cloud Monitoring API
-- [ ] Set up IAM roles and service accounts
-- [ ] Configure billing alerts and budgets
+Refer to `docs/deployment/local-development.md` for a narrative walkthrough of the steps below.
 
-### 2.2 Domain & Email Setup
-- [ ] Purchase domain (cryptocurriculum.org or similar)
-  - Recommended: Google Domains
-  - Cost: ~$15/year
-- [ ] Configure Cloud DNS
-- [ ] Set up Google Workspace for Nonprofits (free)
-  - admin@cryptocurriculum.org
-  - support@cryptocurriculum.org
-  - noreply@cryptocurriculum.org
-- [ ] Configure email authentication (SPF, DKIM, DMARC)
-- [ ] Test email delivery
+### 2.1 Local Tooling & Repository
+- [ ] Install Node.js 18+ and npm/yarn
+- [ ] Install Python 3.11+
+- [ ] Install PostgreSQL 15+ (native) or Docker Desktop
+- [ ] Install Git and clone the repository
+- [ ] Checkout the `development` branch
+- [ ] Document a YOPmail inbox strategy for email testing
 
-### 2.3 Development Environment Setup
-- [ ] Install Google Cloud SDK locally
-- [ ] Authenticate: `gcloud auth login`
-- [ ] Set default project: `gcloud config set project crypto-curriculum-dev`
-- [ ] Install Docker Desktop
-- [ ] Install PostgreSQL locally (for dev)
-- [ ] Create local database: `createdb crypto_curriculum_dev`
-- [ ] Clone GitHub repository
-- [ ] Checkout development branch
+### 2.2 Environment Configuration
+- [ ] Copy frontend env template to `.env.local`
+- [ ] Copy backend env template to `.env`
+- [ ] Set `VITE_API_URL=http://localhost:8000`
+- [ ] Set `DATABASE_URL` to local PostgreSQL instance
+- [ ] Generate a local `JWT_SECRET_KEY`
+- [ ] Configure notification email settings to leverage YOPmail aliases
 
-### 2.4 Initialize Frontend Project
-- [ ] Navigate to: `app/frontend/`
-- [ ] Run: `npm create vite@latest . -- --template react-ts`
-- [ ] Install core dependencies:
+### 2.3 Frontend Setup
+- [ ] Navigate to `app/frontend/`
+- [ ] Install dependencies:
   ```bash
+  npm install
   npm install @mui/material @emotion/react @emotion/styled
   npm install @mui/icons-material
   npm install tailwindcss postcss autoprefixer
@@ -78,64 +53,44 @@
   npm install axios
   npm install @tanstack/react-query
   npm install react-markdown
+  npm install -D @types/node eslint @typescript-eslint/parser prettier
   ```
-- [ ] Install dev dependencies:
-  ```bash
-  npm install -D @types/node
-  npm install -D eslint @typescript-eslint/parser
-  npm install -D prettier
-  ```
-- [ ] Configure Tailwind CSS
-- [ ] Set up TypeScript config (strict mode)
-- [ ] Create base project structure (src/components, src/pages, etc.)
-- [ ] Copy environment template: `cp ../../docs/templates/frontend.env.example .env.local`
-- [ ] Configure Vite for MUI and Tailwind
-- [ ] Test: `npm run dev` (should run on port 5173)
+- [ ] Configure Tailwind CSS (if not already done)
+- [ ] Verify TypeScript config (strict mode)
+- [ ] Confirm base project structure exists (components, pages, services)
+- [ ] Run `npm run dev` (expect app on `http://localhost:5173`)
 
-### 2.5 Initialize Backend Project
-- [ ] Navigate to: `app/backend/`
-- [ ] Create virtual environment: `python -m venv venv`
-- [ ] Activate: `source venv/bin/activate`
-- [ ] Create `requirements.txt`:
-  ```
-  fastapi==0.104.1
-  uvicorn[standard]==0.24.0
-  sqlalchemy==2.0.23
-  alembic==1.12.1
-  psycopg2-binary==2.9.9
-  pydantic==2.5.0
-  pydantic-settings==2.1.0
-  python-jose[cryptography]==3.3.0
-  passlib[bcrypt]==1.7.4
-  python-multipart==0.0.6
-  pytest==7.4.3
-  pytest-asyncio==0.21.1
-  httpx==0.25.2
-  openai==1.3.0
-  anthropic==0.7.0
-  ```
-- [ ] Install: `pip install -r requirements.txt`
-- [ ] Create base project structure (api/, models/, schemas/, core/, services/)
-- [ ] Copy environment template: `cp ../../docs/templates/backend.env.example .env`
-- [ ] Initialize Alembic: `alembic init alembic`
+### 2.4 Backend Setup
+- [ ] Navigate to `app/backend/`
+- [ ] Create/activate virtual environment: `python -m venv venv && source venv/bin/activate`
+- [ ] Install dependencies: `pip install -r requirements.txt`
+- [ ] Verify FastAPI project structure (api/, models/, schemas/, core/, services/)
+- [ ] Initialize Alembic (if not already): `alembic init alembic`
 - [ ] Configure Alembic for async SQLAlchemy
-- [ ] Test: `uvicorn main:app --reload` (should run on port 8000)
+- [ ] Run `uvicorn main:app --reload --port 8000`
 
-### 2.6 Database Setup (Local Development)
-- [ ] Create local PostgreSQL database
-- [ ] Configure database URL in `.env`
-- [ ] Test connection
-- [ ] Create all SQLAlchemy models (12 tables)
-- [ ] Generate initial migration: `alembic revision --autogenerate -m "Initial schema"`
-- [ ] Review migration file
-- [ ] Apply migration: `alembic upgrade head`
-- [ ] Verify tables created
+### 2.5 Database Setup & Seeding
+- [ ] Start local PostgreSQL (native or Docker)
+- [ ] Create database `crypto_curriculum`
+- [ ] Generate migrations as needed (16 core tables)
+- [ ] Apply migrations: `alembic upgrade head`
+- [ ] Dry run seed script: `python scripts/seed-db.py --verbose`
+- [ ] Seed database: `python scripts/seed-db.py --reset --commit`
+- [ ] Verify sample data (modules, lessons, cohorts, attempts)
 
-**Week 1-2 Deliverable:** ✅ Local development environment fully operational
+### 2.6 Local Smoke Test
+- [ ] Confirm backend API docs available at `http://localhost:8000/docs`
+- [ ] Confirm frontend loads data from local API
+- [ ] Register/login via local auth flow
+- [ ] Complete assessment submission end-to-end
+- [ ] Review notifications, grading queue, and analytics dashboards
+- [ ] Run automated tests (backend: `pytest`, frontend lint/tests as configured)
+
+**Phase 2 Deliverable:** ✅ Local development environment fully operational (frontend + backend + database + seed data)
 
 ---
 
-## 👤 PHASE 3: AUTHENTICATION & USER MANAGEMENT (Week 3)
+## 👤 PHASE 3: AUTHENTICATION & USER MANAGEMENT
 
 ### 3.1 Backend Authentication
 - [ ] Create User model (if not done in 2.6)
@@ -171,11 +126,11 @@
 - [ ] Role-based UI rendering
 - [ ] Role-based route protection
 
-**Week 3 Deliverable:** ✅ Users can register, login, and access role-specific features
+**Phase 3 Deliverable:** ✅ Users can register, login, and access role-specific features
 
 ---
 
-## 📚 PHASE 4: CONTENT DELIVERY (Weeks 4-5)
+## 📚 PHASE 4: CONTENT DELIVERY
 
 ### 4.1 Backend Content API
 - [ ] Create Module model (12 fields)
@@ -209,11 +164,11 @@
 - [ ] Verify all content displays correctly
 - [ ] Add sample images/diagrams (if any)
 
-**Week 4-5 Deliverable:** ✅ Students can browse and read all curriculum content
+**Phase 4 Deliverable:** ✅ Students can browse and read all curriculum content
 
 ---
 
-## 📝 PHASE 5: ASSESSMENT SYSTEM (Week 6)
+## 📝 PHASE 5: ASSESSMENT SYSTEM
 
 ### 5.1 Create Assessment Questions
 - [ ] **Module 1:** 10 questions (4 MC, 3 T/F, 3 short answer)
@@ -264,11 +219,11 @@
 - [ ] Show correct answers with explanations
 - [ ] Track attempts and best score
 
-**Week 6 Deliverable:** ✅ Complete assessment system with 170 questions
+**Phase 5 Deliverable:** ✅ Complete assessment system with 170 questions
 
 ---
 
-## 📊 PHASE 6: PROGRESS TRACKING (Week 7)
+## 📊 PHASE 6: PROGRESS TRACKING
 
 ### 6.1 Backend Progress API
 - [ ] Create UserProgress model
@@ -292,11 +247,11 @@
 - [ ] Create progress timeline view
 - [ ] Add statistics (modules completed, time spent, average score)
 
-**Week 7 Deliverable:** ✅ Students can track their learning progress
+**Phase 6 Deliverable:** ✅ Students can track their learning progress
 
 ---
 
-## 👨‍🏫 PHASE 7: INSTRUCTOR FEATURES (Week 8)
+## 👨‍🏫 PHASE 7: INSTRUCTOR FEATURES
 
 ### 7.1 Cohort Management
 - [ ] Create Cohort model
@@ -332,11 +287,11 @@
   - [ ] POST `/api/v1/grading/{attempt_id}` (grade submission)
   - [ ] GET `/api/v1/grading/history` (grading history)
 
-**Week 8 Deliverable:** ✅ Instructors can manage cohorts and grade students
+**Phase 7 Deliverable:** ✅ Instructors can manage cohorts and grade students
 
 ---
 
-## 💬 PHASE 8: COMMUNICATION (Week 9)
+## 💬 PHASE 8: COMMUNICATION
 
 ### 8.1 Discussion Forums Backend
 - [ ] Create ForumPost model
@@ -384,11 +339,11 @@
 - [ ] Add chat history
 - [ ] Add "Ask AI" button on lesson pages
 
-**Week 9 Deliverable:** ✅ Students can communicate and get help
+**Phase 8 Deliverable:** ✅ Students can communicate and get help
 
 ---
 
-## 🏆 PHASE 9: GAMIFICATION (Week 10)
+## 🏆 PHASE 9: GAMIFICATION
 
 ### 9.1 Achievement System
 - [ ] Create Achievement model
@@ -426,11 +381,11 @@
 - [ ] Add upvoting for helpful resources
 - [ ] Organize by module
 
-**Week 10 Deliverable:** ✅ Engagement features active
+**Phase 9 Deliverable:** ✅ Engagement features active
 
 ---
 
-## 🎨 PHASE 10: UI/UX POLISH (Week 11)
+## 🎨 PHASE 10: UI/UX POLISH
 
 ### 10.1 Liquid Glass UI Implementation
 - [ ] Review `dev/part 1 webpage example.html` for design patterns
@@ -478,11 +433,11 @@
 - [ ] Run Lighthouse audit (target >90 score)
 - [ ] Add service worker for caching (optional)
 
-**Week 11 Deliverable:** ✅ Beautiful, accessible, performant UI
+**Phase 10 Deliverable:** ✅ Beautiful, accessible, performant UI
 
 ---
 
-## 🧪 PHASE 11: TESTING (Week 12)
+## 🧪 PHASE 11: TESTING
 
 ### 11.1 Frontend Testing
 - [ ] Unit tests for all components (Jest + React Testing Library)
@@ -518,11 +473,13 @@
 - [ ] Identify bottlenecks
 - [ ] Optimize as needed
 
-**Week 12 Deliverable:** ✅ Fully tested application ready for deployment
+**Phase 11 Deliverable:** ✅ Fully tested application ready for deployment
 
 ---
 
-## ☁️ PHASE 12: GOOGLE CLOUD DEPLOYMENT (Week 13)
+> **Phase 3 Note:** The remaining phases cover cloud deployment and production hardening. Begin only after the Phase 2 local milestone is complete.
+
+## ☁️ PHASE 12: GOOGLE CLOUD DEPLOYMENT
 
 ### 12.1 Containerization
 - [ ] Create Dockerfile for backend
@@ -588,13 +545,13 @@
 - [ ] Configure email/SMS notifications
 - [ ] Set up uptime monitoring (Cloud Monitoring)
 
-**Week 13 Deliverable:** ✅ Application running on Google Cloud (dev environment)
+**Phase 12 Deliverable:** ✅ Application running on Google Cloud (dev environment)
 
 ---
 
-## 🧪 PHASE 13: BETA TESTING (Weeks 14-17)
+## 🧪 PHASE 13: BETA TESTING
 
-### 13.1 Internal Testing (Week 14)
+### 13.1 Internal Testing
 - [ ] Deploy to staging environment
 - [ ] Instructor testing (2-3 instructors)
 - [ ] Admin testing
@@ -604,7 +561,7 @@
 - [ ] Fix critical bugs
 - [ ] Conduct usability testing
 
-### 13.2 Limited Beta (Weeks 15-16)
+### 13.2 Limited Beta
 - [ ] Recruit 10-15 student volunteers
 - [ ] Create beta cohort
 - [ ] Students complete 2-3 modules each
@@ -613,7 +570,7 @@
 - [ ] Fix bugs and improve UX
 - [ ] Test instructor grading workflow
 
-### 13.3 Full Beta (Week 17)
+### 13.3 Full Beta
 - [ ] Recruit 25-30 students (full cohort)
 - [ ] Test with realistic load
 - [ ] Students complete full modules
@@ -623,11 +580,11 @@
 - [ ] Final bug fixes
 - [ ] Performance optimization
 
-**Week 14-17 Deliverable:** ✅ Beta-tested platform with user feedback
+**Phase 13 Deliverable:** ✅ Beta-tested platform with user feedback
 
 ---
 
-## 🚀 PHASE 14: PRODUCTION SETUP (Week 18)
+## 🚀 PHASE 14: PRODUCTION SETUP
 
 ### 14.1 Production Infrastructure
 - [ ] Create production Cloud SQL instance
@@ -674,11 +631,11 @@
 - [ ] Define RTO (Recovery Time Objective): <4 hours
 - [ ] Define RPO (Recovery Point Objective): <1 hour
 
-**Week 18 Deliverable:** ✅ Production environment secured and ready
+**Phase 14 Deliverable:** ✅ Production environment secured and ready
 
 ---
 
-## 📚 PHASE 15: CONTENT & TRAINING (Week 19)
+## 📚 PHASE 15: CONTENT & TRAINING
 
 ### 15.1 Final Content Review
 - [ ] Review all 17 modules display correctly
@@ -709,13 +666,13 @@
 - [ ] Provide written training materials
 - [ ] Create instructor support channel
 
-**Week 19 Deliverable:** ✅ Documentation complete, instructors trained
+**Phase 15 Deliverable:** ✅ Documentation complete, instructors trained
 
 ---
 
-## 🎉 PHASE 16: LAUNCH (Week 20)
+## 🎉 PHASE 16: LAUNCH
 
-### 16.1 Pre-Launch (7 days before)
+### 16.1 Pre-Launch Preparation
 - [ ] Final security audit
 - [ ] Final performance testing
 - [ ] Backup all databases
@@ -726,18 +683,18 @@
 - [ ] Prepare rollback plan
 - [ ] Review launch checklist
 
-### 16.2 Launch Day
+### 16.2 Launch Execution
 - [ ] Deploy final version to production
 - [ ] Smoke test all critical features
 - [ ] Monitor error rates and performance
 - [ ] Support team on standby
 - [ ] Send launch announcement
-- [ ] Gradual student enrollment:
-  - Day 1: 10 students
-  - Day 3: 25 students
-  - Week 2: Full cohort (50+ students)
+- [ ] Gradual student enrollment plan:
+  - Initial wave: 10 students
+  - Expanded wave: 25 students
+  - Full cohort: 50+ students once systems remain stable
 
-### 16.3 Post-Launch (First 2 Weeks)
+### 16.3 Post-Launch Stabilization
 - [ ] Daily monitoring and bug fixes
 - [ ] Collect student feedback (daily survey)
 - [ ] Address critical issues immediately
@@ -746,7 +703,7 @@
 - [ ] Analytics review
 - [ ] Document lessons learned
 
-**Week 20 Deliverable:** 🎉 PLATFORM LIVE IN PRODUCTION
+**Phase 16 Deliverable:** 🎉 PLATFORM LIVE IN PRODUCTION
 
 ---
 
@@ -783,17 +740,17 @@
 ## 📋 MILESTONE TRACKING
 
 ### Milestone 1: Foundation Complete
-**Target:** Week 2  
+**Focus:** Establish local environment and core scaffolding  
 **Criteria:**
 - [x] Documentation complete
-- [ ] Google Cloud set up
+- [ ] Local environment configured (frontend + backend + database)
 - [ ] Frontend initialized
 - [ ] Backend initialized
-- [ ] Database schema implemented
+- [ ] Database schema implemented (16 tables)
 - [ ] Auth working locally
 
 ### Milestone 2: Core Features Complete
-**Target:** Week 7  
+**Focus:** Deliver student-facing experience  
 **Criteria:**
 - [ ] Content display working
 - [ ] Assessments functional
@@ -801,7 +758,7 @@
 - [ ] Student dashboard complete
 
 ### Milestone 3: Full Platform Complete
-**Target:** Week 10  
+**Focus:** Round out instructor experiences and AI assistant  
 **Criteria:**
 - [ ] All student features complete
 - [ ] All instructor features complete
@@ -809,8 +766,8 @@
 - [ ] AI assistant functional
 - [ ] All 170 assessments created
 
-### Milestone 4: Production Deployed
-**Target:** Week 13  
+### Milestone 4: Production Deployed (Phase 3)
+**Focus:** Promote to Google Cloud and harden infrastructure  
 **Criteria:**
 - [ ] Deployed to Google Cloud
 - [ ] Custom domain working
@@ -818,7 +775,7 @@
 - [ ] Security hardened
 
 ### Milestone 5: Beta Tested
-**Target:** Week 17  
+**Focus:** Validate with real users and gather feedback  
 **Criteria:**
 - [ ] 30+ students tested platform
 - [ ] All critical bugs fixed
@@ -826,11 +783,11 @@
 - [ ] Instructors trained
 
 ### Milestone 6: Production Launch
-**Target:** Week 20  
+**Focus:** Launch to full cohort with operational support  
 **Criteria:**
 - [ ] Live with real students
 - [ ] <0.5% error rate
-- [ ] >99% uptime first week
+- [ ] >99% uptime immediately after launch
 - [ ] Positive student feedback
 
 ---
@@ -875,7 +832,7 @@
 - ✅ Privacy policy in place
 - ✅ Support process established
 
-### Business Requirements
+### Business Requirements (Phase 3)
 - ✅ Hosted on Google Cloud
 - ✅ Cost <$100/month
 - ✅ Custom domain working
@@ -901,13 +858,10 @@
 
 ---
 
-**TOTAL TIMELINE: 20 weeks (5 months) from start to production launch**
-
-**CURRENT STATUS:** ✅ Planning Complete (Weeks 1-2 equivalent done)  
+**CURRENT STATUS:** ✅ Planning Complete (foundation documentation ready)  
 **NEXT PHASE:** Foundation setup and project initialization
 
 ---
 
-**Last Updated:** 2025-11-01  
+**Last Updated:** 2025-02-15  
 **Progress:** 10% Complete (Planning phase)
-

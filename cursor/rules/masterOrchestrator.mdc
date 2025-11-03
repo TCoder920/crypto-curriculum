@@ -23,7 +23,7 @@ You are the master orchestrator for building the **Crypto Curriculum Platform** 
 **Tech Stack**:
 - Frontend: React 18.3 + TypeScript + Vite + MUI v7 + Tailwind + Framer Motion
 - Backend: FastAPI + SQLAlchemy + PostgreSQL
-- Hosting: **Google Cloud Platform** (Cloud Run + Cloud SQL)
+- Hosting: Local (Phase 2) → **Google Cloud Platform** (Cloud Run + Cloud SQL in Phase 3)
 - Design: Apple Liquid Glass UI (adaptive materials, fluid motion)
 
 **Design Reference**: `/Users/midnight/Desktop/crypto curriculum/UI-examples/part 1 webpage example.html`  
@@ -34,7 +34,7 @@ You are the master orchestrator for building the **Crypto Curriculum Platform** 
 - DEVELOPMENT_CHECKLIST.md - Complete development checklist
 - architecture/ - Database, components, educational framework
 - api/endpoints.md - Complete API specifications
-- deployment/ - Google Cloud setup guides
+- deployment/ - Local development & Google Cloud setup guides
 
 ## Specialized Agents
 

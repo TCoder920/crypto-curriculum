@@ -2,6 +2,8 @@
 
 Complete guide for deploying the Crypto Curriculum Platform to Google Cloud Platform.
 
+> **Phase 3 Reminder:** Complete the local development milestones first (see `docs/deployment/local-development.md`). Use this guide when you are ready to promote the working build to Google Cloud.
+
 ---
 
 ## 📋 Prerequisites
@@ -31,7 +33,7 @@ Complete guide for deploying the Crypto Curriculum Platform to Google Cloud Plat
 2. Click "Get Started"
 3. Verify nonprofit status via TechSoup
 4. Submit application
-5. Wait for approval (typically 2-4 weeks)
+5. Wait for approval (duration varies)
 
 ### 1.2 Activate Benefits
 
@@ -880,4 +882,3 @@ Before going live:
 
 **Last Updated:** 2025-11-01  
 **Next Review:** After first deployment
-

@@ -180,7 +180,7 @@ crypto-curriculum/
 | Application source code | `app/frontend/` or `app/backend/` | React components, API routes |
 | Component-specific docs | Component's `README.md` | `app/frontend/README.md` |
 | Project-wide documentation | `docs/` | API specs, architecture, checklists |
-| Deployment guides | `docs/deployment/` | Google Cloud setup |
+| Deployment guides | `docs/deployment/` | Local development & Google Cloud setup |
 | Automation scripts | `scripts/` | Setup, deployment, database scripts |
 | AI agent configurations | `cursor/rules/` | Agent rule files (.mdc) |
 | UI design references | `UI-examples/` | **HTML examples to mirror** |
@@ -319,53 +319,55 @@ docker-compose logs -f
 
 ### 📋 Phase 2: Development - READY TO START
 
-**Complete Development Checklist:** See [Development Checklist](docs/DEVELOPMENT_CHECKLIST.md) for detailed 20-week development plan
+**Complete Development Checklist:** See [Development Checklist](docs/DEVELOPMENT_CHECKLIST.md) for a detailed local-first development plan.
 
-#### Foundation (Weeks 1-2)
+**Phase 2 Goal:** Deliver a fully functional LMS experience running locally (frontend, API, database, seed data). Defer cloud deployment to Phase 3. Follow the [Local Development Guide](docs/deployment/local-development.md) for setup.
+
+#### Foundation Setup
 - [ ] Initialize frontend (Vite + React + MUI + Liquid Glass UI + Framer Motion)
 - [ ] Initialize backend (FastAPI + PostgreSQL + SQLAlchemy)
 - [ ] Implement complete database schema (16 tables)
 - [ ] Build JWT authentication with role-based access
 - [ ] Set up development environment
 
-#### Student Core Features (Weeks 3-4)
+#### Student Core Features
 - [ ] Module and lesson display system
 - [ ] Progress tracking dashboard
 - [ ] Auto-graded assessments (MC, T/F)
 - [ ] Student progress visualization
 - [ ] Responsive Liquid Glass UI implementation
 
-#### Instructor Features (Week 5)
+#### Instructor Features
 - [ ] Instructor dashboard with analytics
 - [ ] Cohort management (create, enroll, assign)
 - [ ] Manual grading interface with rubrics
 - [ ] Student monitoring and at-risk detection
 - [ ] Grade export and reporting
 
-#### Code Submission & Review (Week 6)
+#### Code Submission & Review
 - [ ] Deferred to Phase 3 future enhancements (tracked below)
 
-#### Communication & Collaboration (Week 7)
+#### Communication & Collaboration
 - [ ] Discussion forums (module-specific)
 - [ ] Forum posts, replies, upvoting
 - [ ] Built-in AI learning assistant
 - [ ] Notification system
 - [ ] Email notifications (configurable)
 
-#### Gamification & Engagement (Week 8)
+#### Gamification & Engagement
 - [ ] Achievement and badge system (20+ badges)
 - [ ] Student portfolio showcase
 - [ ] Leaderboard (opt-in, privacy-focused)
 - [ ] Advanced analytics for students and instructors
 
-#### AI Trading Bot Integration (Week 9)
+#### AI Trading Bot Integration
 - [ ] Bot configuration interface
 - [ ] Backtesting system with historical data
 - [ ] Paper trading simulation
 - [ ] Performance analytics dashboard
 - [ ] Strategy comparison tools
 
-#### Polish & Content (Weeks 10-12)
+#### Polish & Content
 - [ ] Create 170 assessment questions
 - [ ] Import all curriculum content
 - [ ] Comprehensive testing (unit, integration, E2E)
@@ -374,14 +376,12 @@ docker-compose logs -f
 - [ ] Beta testing with real students
 - [ ] Documentation completion
 
-### 🚀 Phase 3: Future Enhancements
-- [ ] GitHub integration for code submissions
-- [ ] Code viewer with syntax highlighting
-- [ ] Instructor code review tools with inline comments
-- [ ] Rubric-based grading for coding tasks
-- [ ] Peer review system (anonymous, structured)
-- [ ] Submission versioning and revision workflow
-- Coding assessments continue to be reviewed externally per curriculum design.
+### 🚀 Phase 3: Deployment & Production Readiness
+- [ ] Promote the working local build to Google Cloud (Cloud Run + Cloud SQL)
+- [ ] Harden infrastructure (monitoring, logging, CI/CD, budgets)
+- [ ] Prepare MVP launch artifacts (beta cohorts, documentation)
+- [ ] Deliver code-review feature set: GitHub integration, code viewer, instructor review tooling, rubric grading, peer review, submission versioning
+- [ ] Coding assessments continue to be reviewed externally per curriculum design.
 
 ### 🚀 Phase 3: Deployment - UPCOMING
 - [ ] CI/CD pipeline setup
@@ -403,11 +403,16 @@ docker-compose logs -f
 - [Educational Framework](docs/architecture/educational-framework.md) - Multi-instructor/student pedagogy and features
 - [Component Hierarchy](docs/architecture/component-hierarchy.md) - React component structure
 - [API Endpoints](docs/api/endpoints.md) - Complete API reference
-- [Development Checklist](docs/DEVELOPMENT_CHECKLIST.md) - Complete 20-week development plan
+- [Development Checklist](docs/DEVELOPMENT_CHECKLIST.md) - Complete development plan
 
 ### Configuration
 - [Frontend .env Template](docs/templates/frontend.env.example) - Frontend environment variables
 - [Backend .env Template](docs/templates/backend.env.example) - Backend environment variables
+
+### Deployment
+- [Local Development Guide](docs/deployment/local-development.md) - Phase 2 local setup
+- [Google Cloud Setup](docs/deployment/google-cloud-setup.md) - Phase 3 deployment
+- [Database Migrations](docs/deployment/database-migrations.md) - Alembic workflow
 
 ### Curriculum
 - [Curriculum Outline](curriculum/blockchain%20curriculum%20outline.md) - Complete course structure

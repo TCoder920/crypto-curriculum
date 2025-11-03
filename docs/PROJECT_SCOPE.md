@@ -159,15 +159,17 @@ The **Crypto Curriculum Platform** is a **Learning Management System (LMS)** des
 - **Auth:** JWT with bcrypt
 - **Testing:** Pytest
 
-### Hosting (Google Cloud Platform)
-- **Compute:** Cloud Run (containerized apps)
-- **Database:** Cloud SQL (managed PostgreSQL)
-- **Storage:** Cloud Storage (profile pics, images)
-- **CDN:** Cloud CDN (fast global delivery)
-- **Monitoring:** Cloud Logging + Cloud Monitoring
-- **Secrets:** Secret Manager
-- **Domain:** Custom domain with Cloud DNS
-- **Email:** SendGrid or Cloud-native solution
+### Hosting Strategy
+- **Phase 2 (Local Development):** FastAPI + PostgreSQL running locally (Docker or native), Vite dev server, MailHog for email testing
+- **Phase 3 (Google Cloud Platform):**
+  - **Compute:** Cloud Run (containerized apps)
+  - **Database:** Cloud SQL (managed PostgreSQL)
+  - **Storage:** Cloud Storage (profile pics, images)
+  - **CDN:** Cloud CDN (fast global delivery)
+  - **Monitoring:** Cloud Logging + Cloud Monitoring
+  - **Secrets:** Secret Manager
+  - **Domain:** Custom domain with Cloud DNS
+  - **Email:** SendGrid or Cloud-native solution
 
 ### External Services
 - **Email Delivery:** SendGrid (Google partner)
@@ -177,7 +179,9 @@ The **Crypto Curriculum Platform** is a **Learning Management System (LMS)** des
 
 ---
 
-## 💰 Cost Structure (Google Cloud)
+## 💰 Projected Hosting Cost (Phase 3 - Google Cloud)
+
+Phase 2 incurs negligible hosting cost because all services run locally. The estimates below apply when the application is promoted to Google Cloud during Phase 3.
 
 ### Google for Nonprofits Benefits
 - **$3,000/year** Google Cloud credits
@@ -187,7 +191,7 @@ The **Crypto Curriculum Platform** is a **Learning Management System (LMS)** des
 
 ### Estimated Monthly Costs (After Setup)
 
-**With Non-Profit Credits (Year 1):**
+**With Non-Profit Credits (Year 1, Phase 3):**
 ```
 Google Cloud Run (frontend + backend): $30/month
 Cloud SQL PostgreSQL (10GB): $20/month

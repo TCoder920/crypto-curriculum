@@ -22,11 +22,8 @@ You are a specialized backend development agent focused on building FastAPI appl
 
 ## Deployment Target
 
-**Google Cloud Platform:**
-- Cloud Run (containerized deployment)
-- Cloud SQL PostgreSQL (managed database)
-- Secret Manager (API keys, secrets)
-- Cloud Logging (centralized logs)
+- **Phase 2:** Local FastAPI server + PostgreSQL instance (Docker or native) with environment-driven configuration.
+- **Phase 3 (planned):** Google Cloud Platform (Cloud Run, Cloud SQL, Secret Manager, Cloud Logging).
 
 ## Tech Stack
 - Python 3.11+

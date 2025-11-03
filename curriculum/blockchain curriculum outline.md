@@ -294,5 +294,127 @@ Modules 14-17: Building complex systems and AI applications
 
 **Target Audience:** Complete beginners with no prior technical, financial, or blockchain knowledge.
 
-**Current as of:** October 31, 2025
+### Additional Blockchain & Cryptocurrency Course Platforms
+
+---
+
+### COURSES ON COURSERA
+* **Cost:** Courses can be audited for **free**. To earn certificates, pricing is per-course (approx. **$49-$99**), by Specialization (approx. **$49-$99/month**), or via Coursera Plus subscription (**$59/month** or **$399/year**).
+* **Details:**
+    * **Blockchain Specialization**
+        * **Link:** `https://www.coursera.org/specializations/blockchain`
+        * **Focus:** Fundamentals, consensus, smart contracts, and dApps. You design, code, deploy, and execute smart contracts in Solidity.
+        * **Fit:** Modules 1, 3, 4, 12, 13.
+    * **Smart Contracts**
+        * **Link:** `https://www.coursera.org/learn/smarter-contracts`
+        * **Focus:** Writing and deploying smart contracts, plus how contract logic encodes rules and policies.
+        * **Fit:** Modules 12, 14.
+    * **Decentralized Finance (DeFi) Specialization by Duke**
+        * **Link:** `https://www.coursera.org/specializations/decentralized-finance-duke`
+        * **Focus:** DeFi infrastructure, lending/borrowing, liquidity pools, automated market makers, MakerDAO, and protocol mechanics.
+        * **Fit:** Modules 6, 9, 10.
+    * **Blockchain, Cryptoassets, and Decentralized Finance**
+        * **Link:** `https://www.coursera.org/learn/blockchain-crypto-decentralized-finance`
+        * **Focus:** Transacting without intermediaries, cryptoasset economics, and distributed systems.
+        * **Fit:** Modules 1, 2, 4, 5, 6.
+    * **Solidity Mastery: Foundations to Advanced Smart Contracts**
+        * **Link:** `https://www.coursera.org/specializations/packt-solidity-mastery-foundations-to-advanced-smart-contracts`
+        * **Focus:** Solidity syntax, contract patterns, inheritance, security, testing, and deployment.
+        * **Fit:** Modules 12, 13, 14, 15.
+
+---
+
+### COURSES ON BRILLIANT
+* **Cost:** Requires a subscription (approx. **$24.99/month** or **$161.88/year**).
+* **Details:**
+    * **Cryptocurrency**
+        * **Link:** `https://brilliant.org/courses/cryptocurrency/`
+        * **Focus:** Math and mechanics behind cryptocurrencies. Covers cryptographic hashing, block linking, immutability, and Proof-of-Work.
+        * **Fit:** Modules 1, 3, 7 (intro level).
+
+---
+
+### OTHER HIGH-FIT PLATFORMS
+
+#### Udacity
+* **Cost:** Per-program "Nanodegree" fee (approx. **$1,436** for the 4-month program).
+* **Details:**
+    * **Blockchain Developer Nanodegree**
+        * **Link:** `https://www.udacity.com/course/blockchain-developer--nd1310`
+        * **Focus:** Fundamentals, consensus, wallets; Solidity smart contract development, security; Hardhat testing; dApp building, including a collateralized loan contract.
+        * **Fit:** Modules 1, 2, 3, 10, 11, 12, 13, 14, 15.
+
+#### ConsenSys Academy
+* **Cost:** Per-course fee. The mentor-led Bootcamp is approx. **$985**. The self-paced On-Demand track is approx. **$695**.
+* **Details:**
+    * **Blockchain Developer Bootcamp / Developer On-Demand**
+        * **Link:** `https://consensys.io/academy`
+        * **Focus:** End-to-end Ethereum development, Solidity, security, audits, and production deployment.
+        * **Fit:** Modules 11, 12, 13, 14, 15.
+
+#### Moralis Academy
+* **Cost:** Subscription-based (Monthly and Yearly plans).
+* **Details:**
+    * **Example tracks:** Blockchain & Bitcoin 101, Ethereum Smart Contract Programming 101, DeFi 201.
+        * **Link:** `https://academy.moralis.io`
+        * **Focus:** Web3 developer school. Covers core concepts, Solidity, DeFi mechanics, and front-end integration.
+        * **Fit:** Modules 1–5, 8–10, 11–13, 14–16.
+
+#### MIT Sloan / GetSmarter
+* **Cost:** Per-course fee (approx. **$3,500 - $3,850**).
+* **Details:**
+    * **Blockchain and Crypto Applications: From DeFi to Web3**
+        * **Link:** `https://executive.mit.edu/course/blockchain-and-crypto-applications--from-decentralized-finance-to-web-3/a054v00000rHFLVAA4.html`
+        * **Focus:** Economics of blockchain, stablecoins, NFTs, DeFi protocols, and Web3 business strategy.
+        * **Fit:** Modules 8, 9, 10, 14, 15.
+
+#### Alchemy University
+* **Cost:** **Free**.
+* **Details:**
+    * **Ethereum Developer Bootcamp / Road to Web3**
+        * **Link:** `https://www.alchemy.com/university/courses`
+        * **Focus:** Comprehensive, free courses covering EVM development from fundamentals to advanced dApp and smart contract creation.
+        * **Fit:** Modules 11-15.
+
+#### CryptoZombies
+* **Cost:** **Free**.
+* **Details:**
+    * **Gamified Solidity Tutorial**
+        * **Link:** `https://cryptozombies.io/`
+        * **Focus:** Interactive, game-based school that teaches Solidity programming by building a zombie game.
+        * **Fit:** Modules 12, 15.
+
+#### Chainalysis Academy
+* **Cost:** Per-certification fee (approx. **$650** per course).
+* **Details:**
+    * **Certification Programs**
+        * **Link:** `https://www.chainalysis.com/chainalysis-certification-programs/`
+        * **Focus:** Professional training for on-chain analysis, transaction tracing, and wallet analysis.
+        * **Fit:** Modules 8-10.
+
+#### Udemy
+* **Cost:** Per-course fee (prices vary, frequent sales).
+* **Details:**
+    * **Blockchain Topic Page:** `https://www.udemy.com/topic/blockchain/`
+    * **Solidity Topic Page:** `https://www.udemy.com/topic/solidity/`
+    * **Focus:** Wide variety of user- and developer-focused courses covering all topics.
+    * **Fit:** All Parts (1-4).
+
+#### edX
+* **Cost:** Courses can be audited for **free**. To earn a verified certificate, the fee is approx. **$50 - $300** per course.
+* **Details:**
+    * **Blockchain Courses & Certificates**
+        * **Link:** `https://www.edx.org/learn/blockchain`
+        * **Focus:** University-level courses (e.g., from UC Berkeley, Linux Foundation) on blockchain fundamentals and developer tracks.
+        * **Fit:** All Parts (1-4).
+
+#### Web3 University
+* **Cost:** **Free**.
+* **Details:**
+    * **Learning Tracks**
+        * **Link:** `https://www.web3.university/`
+        * **Focus:** A collection of free tutorials and learning paths for building dApps and NFT contracts.
+        * **Fit:** Modules 11-15.
+
+**Current as of:** November 2, 2025
 
