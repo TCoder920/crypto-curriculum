@@ -243,7 +243,7 @@ UI Update (with fluid animations)
 /register                   → RegisterPage
 
 /admin/users                → AdminUsersPage (admin only)
-/admin/analytics            → AdminAnalyticsPage (admin/teacher)
+/admin/analytics            → AdminAnalyticsPage (admin/instructor)
 ```
 
 ---
@@ -380,4 +380,3 @@ src/
 ---
 
 **Last Updated:** 2025-11-01
-

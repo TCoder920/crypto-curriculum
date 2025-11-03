@@ -197,7 +197,7 @@ crypto-curriculum/
 - **Assessments**: 10 questions/tasks per module (170 total)
 - **AI Trading Bot**: Build and customize your own trading bot
 
-### For Teachers
+### For Instructors
 - **Admin Dashboard**: Manage students and content
 - **Progress Monitoring**: Track student completion and scores
 - **Content Management**: Update curriculum materials
@@ -324,7 +324,7 @@ docker-compose logs -f
 #### Foundation (Weeks 1-2)
 - [ ] Initialize frontend (Vite + React + MUI + Liquid Glass UI + Framer Motion)
 - [ ] Initialize backend (FastAPI + PostgreSQL + SQLAlchemy)
-- [ ] Implement complete database schema (12 tables)
+- [ ] Implement complete database schema (16 tables)
 - [ ] Build JWT authentication with role-based access
 - [ ] Set up development environment
 
@@ -343,12 +343,7 @@ docker-compose logs -f
 - [ ] Grade export and reporting
 
 #### Code Submission & Review (Week 6)
-- [ ] GitHub integration for code submissions
-- [ ] Code viewer with syntax highlighting
-- [ ] Instructor code review tools with inline comments
-- [ ] Rubric-based grading for coding tasks
-- [ ] Peer review system (anonymous, structured)
-- [ ] Submission versioning and revision workflow
+- [ ] Deferred to Phase 3 future enhancements (tracked below)
 
 #### Communication & Collaboration (Week 7)
 - [ ] Discussion forums (module-specific)
@@ -379,6 +374,15 @@ docker-compose logs -f
 - [ ] Beta testing with real students
 - [ ] Documentation completion
 
+### 🚀 Phase 3: Future Enhancements
+- [ ] GitHub integration for code submissions
+- [ ] Code viewer with syntax highlighting
+- [ ] Instructor code review tools with inline comments
+- [ ] Rubric-based grading for coding tasks
+- [ ] Peer review system (anonymous, structured)
+- [ ] Submission versioning and revision workflow
+- Coding assessments continue to be reviewed externally per curriculum design.
+
 ### 🚀 Phase 3: Deployment - UPCOMING
 - [ ] CI/CD pipeline setup
 - [ ] Production environment configuration
@@ -395,7 +399,7 @@ docker-compose logs -f
 - [Development Workflow](docs/guides/development-workflow.md) - Git workflow and best practices
 
 ### Architecture & Design
-- [Database Schema](docs/architecture/database-schema.md) - Complete database design (12 tables) and ERD
+- [Database Schema](docs/architecture/database-schema.md) - Complete database design (16 tables) and ERD
 - [Educational Framework](docs/architecture/educational-framework.md) - Multi-instructor/student pedagogy and features
 - [Component Hierarchy](docs/architecture/component-hierarchy.md) - React component structure
 - [API Endpoints](docs/api/endpoints.md) - Complete API reference
@@ -442,4 +446,3 @@ This project is developed for Universal Tech Movement in Austin, TX.
 ---
 
 **Built with ❤️ for the next generation of blockchain developers**
-

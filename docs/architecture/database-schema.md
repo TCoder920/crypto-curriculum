@@ -23,12 +23,12 @@ Note: AI Trading Bot configuration (BotConfiguration, TradingStrategy)
 is content-only for Module 17 - no actual bot execution in platform.
 ```
 
-**Total Tables:** 12 core tables (simplified LMS scope)
+**Total Tables:** 16 core tables (expanded LMS scope)
 
 ## Core Entities
 
 ### Users Table
-Stores student and teacher accounts.
+Stores student and instructor accounts.
 
 ```sql
 CREATE TABLE users (
@@ -37,7 +37,7 @@ CREATE TABLE users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
-    role VARCHAR(20) NOT NULL DEFAULT 'student',  -- 'student', 'teacher', 'admin'
+    role VARCHAR(20) NOT NULL DEFAULT 'student',  -- 'student', 'instructor', 'admin'
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -53,7 +53,7 @@ CREATE INDEX idx_users_role ON users(role);
 - `email` - User's email (unique, for login)
 - `username` - Display name
 - `password_hash` - Bcrypt hashed password
-- `role` - User role (student, teacher, admin)
+- `role` - User role (student, instructor, admin)
 - `is_active` - Account status
 - `created_at` - Account creation timestamp
 - `updated_at` - Last update timestamp
@@ -191,6 +191,11 @@ CREATE TABLE quiz_attempts (
     user_answer TEXT,
     is_correct BOOLEAN,
     points_earned INTEGER,
+    review_status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- 'pending', 'graded', 'needs_review'
+    graded_by UUID REFERENCES users(id),
+    feedback TEXT,
+    partial_credit BOOLEAN DEFAULT false,
+    graded_at TIMESTAMP,
     attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     time_spent_seconds INTEGER
 );
@@ -198,12 +203,19 @@ CREATE TABLE quiz_attempts (
 CREATE INDEX idx_attempts_user ON quiz_attempts(user_id);
 CREATE INDEX idx_attempts_assessment ON quiz_attempts(assessment_id);
 CREATE INDEX idx_attempts_date ON quiz_attempts(attempted_at);
+CREATE INDEX idx_attempts_status ON quiz_attempts(review_status) WHERE review_status = 'pending';
+CREATE INDEX idx_attempts_grader ON quiz_attempts(graded_by);
 ```
 
 **Fields:**
 - `user_answer` - Student's submitted answer
 - `is_correct` - Whether answer was correct
 - `points_earned` - Points awarded
+- `review_status` - Grading state (`pending`, `graded`, `needs_review`)
+- `graded_by` - Instructor who graded the attempt
+- `feedback` - Instructor feedback text
+- `partial_credit` - Whether partial credit was awarded
+- `graded_at` - Timestamp when the attempt was graded
 - `time_spent_seconds` - Time to answer
 
 ---
@@ -260,6 +272,65 @@ CREATE INDEX idx_cohort_members_user ON cohort_members(user_id);
 
 ---
 
+### Cohort Deadlines Table
+Tracks important milestone dates per cohort.
+
+```sql
+CREATE TABLE cohort_deadlines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cohort_id UUID NOT NULL REFERENCES cohorts(id) ON DELETE CASCADE,
+    module_id INTEGER REFERENCES modules(id),
+    deadline_date DATE NOT NULL,
+    is_mandatory BOOLEAN DEFAULT true,
+    description TEXT,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_deadlines_cohort ON cohort_deadlines(cohort_id);
+CREATE INDEX idx_deadlines_date ON cohort_deadlines(deadline_date);
+```
+
+**Fields:**
+- `cohort_id` - Cohort that owns the deadline
+- `module_id` - Optional module reference
+- `deadline_date` - Due date for the milestone
+- `is_mandatory` - Whether deadline is required
+- `description` - Additional context for the deadline
+- `created_by` - Instructor/admin who created the deadline
+
+---
+
+### Announcements Table
+Platform and cohort announcements.
+
+```sql
+CREATE TABLE announcements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cohort_id UUID REFERENCES cohorts(id) ON DELETE CASCADE,
+    author_id UUID NOT NULL REFERENCES users(id),
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    is_pinned BOOLEAN DEFAULT false,
+    priority VARCHAR(20) NOT NULL DEFAULT 'normal', -- 'low', 'normal', 'high', 'urgent'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_announcements_cohort ON announcements(cohort_id);
+CREATE INDEX idx_announcements_pinned ON announcements(is_pinned) WHERE is_pinned = true;
+```
+
+**Fields:**
+- `cohort_id` - Target cohort (`NULL` for platform-wide)
+- `author_id` - Announcement author
+- `title` / `content` - Announcement details
+- `is_pinned` - Whether the announcement is pinned
+- `priority` - Urgency level
+- `created_at` / `updated_at` - Audit timestamps
+
+---
+
 ### Forum Posts Table
 Discussion forums for each module.
 
@@ -312,10 +383,17 @@ CREATE TABLE achievements (
     icon VARCHAR(50),
     category VARCHAR(50),  -- 'completion', 'score', 'engagement', 'helper'
     criteria JSONB,  -- Conditions to earn
+    progress_tracking JSONB,  -- Multi-step progress template
     points INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true
 );
 ```
+
+**Fields:**
+- `criteria` - JSON rules that describe how an achievement is earned
+- `progress_tracking` - JSON template describing steps/checkpoints for multi-step achievements
+- `points` - Optional points for leaderboard or rewards systems
+- `is_active` - Whether achievement can currently be earned
 
 ---
 
@@ -333,6 +411,36 @@ CREATE TABLE user_achievements (
 
 CREATE INDEX idx_user_achievements_user ON user_achievements(user_id);
 ```
+
+---
+
+### Leaderboards Table
+Stores opt-in leaderboard standings.
+
+```sql
+CREATE TABLE leaderboards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cohort_id UUID REFERENCES cohorts(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category VARCHAR(50) NOT NULL,  -- 'progress', 'scores', 'engagement'
+    score DECIMAL(10,2) NOT NULL DEFAULT 0,
+    rank INTEGER,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (cohort_id, user_id, category)
+);
+
+CREATE INDEX idx_leaderboards_category ON leaderboards(category);
+CREATE INDEX idx_leaderboards_cohort ON leaderboards(cohort_id);
+```
+
+**Fields:**
+- `cohort_id` - Optional cohort context (`NULL` = global)
+- `category` - Leaderboard type
+- `score` - Calculated leaderboard score
+- `rank` - Last computed rank
+- `updated_at` - Timestamp of last score update
+
+**Note:** Leaderboards are opt-in per cohort and respect user privacy settings.
 
 ---
 
@@ -357,17 +465,79 @@ CREATE INDEX idx_resources_module ON learning_resources(module_id);
 
 ---
 
+### Notifications Table
+Stores user notifications.
+
+```sql
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,  -- 'assessment_graded', 'forum_reply', 'announcement', 'module_unlocked'
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    link VARCHAR(500),
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP
+);
+
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = false;
+```
+
+**Fields:**
+- `type` - Notification category
+- `title` / `message` - Notification content
+- `link` - Optional deep link for the notification
+- `is_read` - Read status
+- `created_at` / `read_at` - Audit timestamps
+
+---
+
+### Chat Messages Table
+Logs AI assistant chat sessions.
+
+```sql
+CREATE TABLE chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    response TEXT,
+    context JSONB,  -- Stores current module/lesson info
+    suggested_lessons UUID[],
+    escalated BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_chat_user ON chat_messages(user_id);
+CREATE INDEX idx_chat_date ON chat_messages(created_at);
+```
+
+**Fields:**
+- `message` - Learner prompt
+- `response` - Assistant reply
+- `context` - JSON payload describing conversation context
+- `suggested_lessons` - Related lessons recommended by assistant
+- `escalated` - Flag for instructor escalation
+- `created_at` - Timestamp of message exchange
+
+---
+
 ## Relationships
 
 ### One-to-Many
 - `User` → `UserProgress` (one user has many module progress records)
 - `User` → `QuizAttempt` (one user has many quiz attempts)
 - `User` → `ForumPost` (one user creates many posts)
+- `User` → `Notification` (one user receives many notifications)
+- `User` → `ChatMessage` (one user has many assistant interactions)
 - `Module` → `Lesson` (one module has many lessons)
 - `Module` → `Assessment` (one module has many assessments)
 - `Module` → `LearningResource` (one module has many external resources)
 - `Module` → `ForumPost` (one module has many discussion posts)
 - `Cohort` → `CohortMember` (one cohort has many members)
+- `Cohort` → `CohortDeadline` (one cohort manages many deadlines)
+- `Cohort` → `Announcement` (one cohort can host many announcements)
 - `ForumPost` → `ForumPost` (self-referencing for replies)
 
 ### Many-to-Many
@@ -382,7 +552,7 @@ CREATE INDEX idx_resources_module ON learning_resources(module_id);
 - ~~BotConfigurations~~ - Bots built externally
 - ~~TradingStrategies~~ - Not executed in platform
 
-**Final count: 12 tables** (streamlined for content delivery)
+**Final count: 16 tables** (Phase 2 expanded scope with communication and analytics)
 
 ---
 
@@ -391,7 +561,14 @@ CREATE INDEX idx_resources_module ON learning_resources(module_id);
 Performance-critical indexes:
 - `users(email)` - Fast login lookups
 - `user_progress(user_id)` - Fast progress queries
-- `quiz_attempts(user_id, assessment_id)` - Fast score lookups
+- `quiz_attempts(review_status)` (partial) - Efficient pending grading queue
+- `quiz_attempts(graded_by)` - Filter attempts by grader
+- `notifications(user_id)` - Retrieve notifications per user
+- `notifications(user_id, is_read)` (partial) - Fetch unread notifications
+- `chat_messages(user_id)` - Retrieve chat history for a user
+- `cohort_deadlines(cohort_id)` - List cohort deadlines quickly
+- `announcements(cohort_id)` - Filter announcements by cohort
+- `leaderboards(category, cohort_id)` - Load leaderboard standings
 - `lessons(module_id)` - Fast module content retrieval
 
 ---
@@ -436,6 +613,59 @@ GROUP BY m.id, m.title
 ORDER BY m.id;
 ```
 
+### Get pending grading queue
+```sql
+SELECT 
+    qa.id,
+    qa.user_id,
+    qa.assessment_id,
+    qa.attempted_at,
+    u.full_name AS student_name,
+    a.question_type,
+    m.id AS module_id,
+    m.title AS module_title
+FROM quiz_attempts qa
+JOIN users u ON qa.user_id = u.id
+JOIN assessments a ON qa.assessment_id = a.id
+JOIN modules m ON a.module_id = m.id
+WHERE qa.review_status = 'pending'
+  AND a.question_type IN ('short-answer', 'coding-task')
+ORDER BY qa.attempted_at ASC;
+```
+
+### Get unread notifications for user
+```sql
+SELECT 
+    n.id,
+    n.title,
+    n.message,
+    n.type,
+    n.created_at
+FROM notifications n
+WHERE n.user_id = :user_id
+  AND n.is_read = false
+ORDER BY n.created_at DESC;
+```
+
+---
+
+## Assessment Grading Workflows
+
+- **Auto-Graded Questions:** Multiple-choice and true/false submissions are graded instantly. `is_correct` and `points_earned` are set upon submission and `review_status` is updated to `graded`.
+- **Manual Grading:** Short-answer and coding-task submissions start with `review_status = 'pending'`. Instructors review the attempt, set `is_correct`, `points_earned`, `graded_by`, `feedback`, `partial_credit`, update `graded_at`, and mark `review_status = 'graded'`.
+- **Question Types & Paths:**
+  - Auto-grade: `multiple-choice`, `true-false`
+  - Manual grade: `short-answer`, `coding-task`
+
+---
+
+## Achievement Unlocking Logic
+
+- **Evaluation Triggers:** Achievements are evaluated on assessment submission, module completion, cohort engagement events (forum posts, helpful votes), and instructor actions.
+- **Criteria Examples:** Complete Module 1, score 100% on a module assessment, help 10 peers in forums, maintain 7-day activity streak, complete all architect-track modules.
+- **Progress Tracking:** `achievements.criteria` defines rules, while `achievements.progress_tracking` outlines steps and thresholds. `user_achievements.progress` stores real-time progress (e.g., `{ "forums_helped": 7 }`).
+- **Multi-Step Flow:** When an event occurs, update `user_achievements.progress`; once progress meets criteria, set `earned_at` and optionally update leaderboard scores.
+
 ---
 
 ## Migration Strategy
@@ -460,12 +690,13 @@ After creating tables, seed with:
 1. **17 Modules** - From curriculum outline
 2. **Lessons** - From curriculum parts 1-4
 3. **Assessments** - 10 per module (170 total)
-4. **Sample Users** - For testing
-5. **Sample Progress** - For UI development
+4. **Sample Users** - Admin, instructors, and students
+5. **Sample Cohorts** - With members and deadlines
+6. **Sample Quiz Attempts** - Mix of auto-graded and pending reviews
+7. **Notifications & Chat Messages** - For UI development scenarios
 
-See `scripts/seed-db.py` (to be created)
+Use `scripts/seed-db.py` to reset and repopulate the database during development.
 
 ---
 
-**Last Updated:** 2025-11-01
-
+**Last Updated:** 2025-02-15

@@ -9,7 +9,7 @@ The **Crypto Curriculum Platform** is a **Learning Management System (LMS)** des
 ✅ **Assessment System** - Quiz students on their understanding  
 ✅ **Progress Tracker** - Monitor student advancement through modules  
 ✅ **Discussion Forum** - Allow students to ask questions and collaborate  
-✅ **Instructor Dashboard** - Enable teachers to monitor and grade students  
+✅ **Instructor Dashboard** - Enable instructors to monitor and grade students  
 ✅ **AI Learning Assistant** - Provide instant help and guidance  
 
 ### What This Application IS NOT:
@@ -281,4 +281,3 @@ See comprehensive development checklist in: **`docs/DEVELOPMENT_CHECKLIST.md`** 
 
 **Last Updated:** 2025-11-01  
 **Status:** Planning Complete, Ready for Development
-

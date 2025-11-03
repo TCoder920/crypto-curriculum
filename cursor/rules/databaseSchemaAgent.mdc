@@ -70,7 +70,7 @@ import enum
 
 class UserRole(str, enum.Enum):
     STUDENT = "student"
-    TEACHER = "teacher"
+    INSTRUCTOR = "instructor"
     ADMIN = "admin"
 
 class User(Base):
@@ -443,7 +443,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create enum type
-    user_role_enum = ENUM('student', 'teacher', 'admin', name='userrole', create_type=False)
+    user_role_enum = ENUM('student', 'instructor', 'admin', name='userrole', create_type=False)
     user_role_enum.create(op.get_bind(), checkfirst=True)
     
     # Create users table
@@ -472,7 +472,7 @@ def downgrade() -> None:
     op.drop_table('users')
     
     # Drop enum type
-    user_role_enum = ENUM('student', 'teacher', 'admin', name='userrole', create_type=False)
+    user_role_enum = ENUM('student', 'instructor', 'admin', name='userrole', create_type=False)
     user_role_enum.drop(op.get_bind(), checkfirst=True)
 ```
 

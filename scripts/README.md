@@ -173,7 +173,44 @@ chmod +x scripts/setup-dev.sh
 ./scripts/seed-db.sh --sample-data
 ```
 
+## 🧪 Database Seeding (`seed-db.py`)
+
+### Prerequisites
+- Python 3.11+
+- Install dependencies inside your virtualenv:
+  ```bash
+  pip install sqlalchemy psycopg[binary]
+  ```
+- PostgreSQL instance accessible via `DATABASE_URL` (defaults to `postgresql+psycopg://postgres:postgres@localhost:5432/crypto_curriculum`)
+
+### Usage
+- Dry run (no database writes):
+  ```bash
+  python scripts/seed-db.py
+  ```
+- Seed database (truncate first and apply changes):
+  ```bash
+  DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/crypto_curriculum \
+  python scripts/seed-db.py --reset --commit
+  ```
+- Additional flags:
+  - `--reset` – Truncate tables before seeding (uses `CASCADE`)
+  - `--commit` – Apply changes; omit for dry run previews
+  - `--database-url` – Override connection string
+  - `--verbose` – Enable debug logging for troubleshooting
+
+### Data Coverage
+- Imports modules and lessons directly from the curriculum markdown files
+- Generates 170 assessment questions (10 per module) with mixed question types
+- Seeds sample users (admin, instructors, students), cohorts, deadlines, announcements
+- Populates progress, quiz attempts (auto and manual grading scenarios), notifications, chat transcripts, and leaderboards
+
+### Cleanup & Resets
+- Use `--reset` to clear existing seed data before generating a fresh dataset
+- For production environments, run without `--reset` and target only new datasets as needed
+- Review generated data via `SELECT COUNT(*)` checks after the script runs
+
+
 ---
 
 **Remember:** Scripts should be reusable, well-documented, and safe to run. Always test scripts in a safe environment before using them in production.
-
