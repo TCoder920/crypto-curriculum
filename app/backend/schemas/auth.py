@@ -6,12 +6,16 @@ from app.backend.models.user import UserRole
 
 
 class UserRegister(BaseModel):
-    """User registration schema"""
+    """User registration schema
+    
+    Note: All registrations are automatically assigned STUDENT role.
+    Admin and instructor roles can only be assigned via seed script or admin endpoint.
+    """
     email: EmailStr
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     username: Optional[str] = Field(None, max_length=50)
     full_name: Optional[str] = Field(None, max_length=255)
-    role: UserRole = UserRole.STUDENT
+    # Role is always STUDENT for new registrations - removed from schema for security
 
 
 class UserLogin(BaseModel):

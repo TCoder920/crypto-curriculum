@@ -19,16 +19,15 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 #root {
   width: 100%;
-  margin: 0 auto;
-  text-align: center;
+  min-height: 100vh;
 }
 
 /* Glass surface effect */

@@ -16,7 +16,6 @@ export const RegisterPage: React.FC = () => {
     confirmPassword: '',
     username: '',
     full_name: '',
-    role: 'student' as 'student' | 'instructor' | 'admin',
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +57,7 @@ export const RegisterPage: React.FC = () => {
         password: formData.password,
         username: formData.username || undefined,
         full_name: formData.full_name || undefined,
-        role: formData.role,
+        // Role is always STUDENT - set by backend for security
       });
       
       // Wait a moment for state to update, then navigate
@@ -84,14 +83,34 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-blue-900 p-4">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: { xs: 2, sm: 3, md: 4 },
+        width: "100%",
+        maxWidth: "100vw",
+        overflowX: "hidden",
+      }}
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
       >
-        <div className="glass-surface rounded-3xl p-8">
+        <Box
+          sx={{
+            background: "rgba(22, 27, 34, 0.8)",
+            backdropFilter: "blur(20px)",
+            borderRadius: 4,
+            p: 4,
+            width: "100%",
+            maxWidth: 400,
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+          }}
+        >
           <Box className="text-center mb-8">
             <PersonAddIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
             <Typography variant="h4" component="h1" className="font-bold mb-2">
@@ -162,20 +181,6 @@ export const RegisterPage: React.FC = () => {
               autoComplete="name"
             />
 
-            <TextField
-              fullWidth
-              select
-              label="Role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              required
-            >
-              <MenuItem value="student">Student</MenuItem>
-              <MenuItem value="instructor">Instructor</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-            </TextField>
-
             <Button
               type="submit"
               fullWidth
@@ -196,9 +201,9 @@ export const RegisterPage: React.FC = () => {
               </Link>
             </Typography>
           </Box>
-        </div>
+        </Box>
       </motion.div>
-    </div>
+    </Box>
   );
 };
 

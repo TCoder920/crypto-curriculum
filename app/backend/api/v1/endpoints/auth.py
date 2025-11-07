@@ -47,7 +47,11 @@ async def register(
     user_data: UserRegister,
     db: AsyncSession = Depends(get_db)
 ):
-    """Register a new user"""
+    """Register a new user (always as STUDENT)
+    
+    Security: Admin and instructor roles can only be assigned via seed script
+    or direct database manipulation. All self-registrations are STUDENT role.
+    """
     # Check if email already exists
     result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalar_one_or_none()
@@ -67,14 +71,15 @@ async def register(
                 detail="Username already taken"
             )
     
-    # Create new user
+    # SECURITY: Force all registrations to be STUDENT role
+    # Admin and instructor roles can only be assigned via seed script or admin endpoint
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         email=user_data.email,
         hashed_password=hashed_password,
         username=user_data.username,
         full_name=user_data.full_name,
-        role=user_data.role,
+        role=UserRole.STUDENT,  # Always STUDENT, ignore any role in request
         is_active=True,
         is_verified=False  # Email verification can be added later
     )

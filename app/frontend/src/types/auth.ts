@@ -21,7 +21,8 @@ export interface RegisterData {
   password: string;
   username?: string;
   full_name?: string;
-  role?: 'student' | 'instructor' | 'admin';
+  // Role is always 'student' - set by backend for security
+  // Admin and instructor roles can only be assigned via seed script or admin endpoint
 }
 
 export interface TokenResponse {
