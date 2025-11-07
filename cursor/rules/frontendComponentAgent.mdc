@@ -42,7 +42,7 @@ You are a specialized frontend development agent focused on building React compo
 - Material-UI (MUI) v7 with Emotion styling
 - Tailwind CSS for utility styling
 - React Router v6 for routing
-- Axios for API calls to backend (port 8000)
+- Axios for API calls to backend (port 9000)
 
 ## Core Principles
 

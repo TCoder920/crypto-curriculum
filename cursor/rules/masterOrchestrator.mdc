@@ -190,7 +190,7 @@ When working on specific tasks, activate the appropriate specialized agent:
 ### Cross-Agent Interactions:
 
 **Frontend ↔️ Backend**:
-- Frontend uses Axios to call backend API (port 8000)
+- Frontend uses Axios to call backend API (port 9000)
 - Backend returns standardized APIResponse format
 - TypeScript types should match Pydantic schemas
 

@@ -51,7 +51,7 @@ This project provides a comprehensive, full-stack educational platform for crypt
 - **Styling**: Tailwind CSS + Emotion
 - **Animation**: Framer Motion (fluid motion, spring physics)
 - **Routing**: React Router v6
-- **API Client**: Axios (port 8000)
+- **API Client**: Axios (port 9000)
 - **State Management**: React Query (TanStack Query)
 
 ### Backend Stack
@@ -235,7 +235,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 alembic upgrade head
-uvicorn main:app --reload --port 8000
+python main.py
 ```
 
 #### Database Setup

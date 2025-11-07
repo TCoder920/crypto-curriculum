@@ -18,7 +18,7 @@ Phase 2 focuses on delivering a complete LMS experience running locally. Use thi
    cp docs/templates/backend.env.example app/backend/.env
    ```
 3. Update local URLs and credentials in the copied files:
-   - `VITE_API_URL=http://localhost:8000`
+   - `VITE_API_URL=http://localhost:9000`
    - `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/crypto_curriculum`
    - Generate a local `JWT_SECRET_KEY`.
 4. (Optional) Create a Python virtual environment in `app/backend`: `python -m venv venv`.
@@ -49,9 +49,13 @@ Phase 2 focuses on delivering a complete LMS experience running locally. Use thi
    ```
 2. Run the API:
    ```bash
-   uvicorn main:app --reload --port 8000
+   python main.py
    ```
-3. Confirm health at `http://localhost:8000/docs`.
+   Or using uvicorn directly:
+   ```bash
+   uvicorn app.backend.main:app --reload --host 0.0.0.0 --port 9000
+   ```
+3. Confirm health at `http://localhost:9000/docs`.
 
 ## 5. Frontend
 1. Install dependencies:
