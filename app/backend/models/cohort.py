@@ -26,6 +26,7 @@ class Cohort(Base):
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False, index=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True, index=True)
     
     # Metadata
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)

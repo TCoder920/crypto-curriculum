@@ -12,6 +12,7 @@ import { ModulePage } from './pages/ModulePage'
 import { AssessmentPage } from './pages/AssessmentPage'
 import { ProgressPage } from './pages/ProgressPage'
 import { ProfileSettingsPage } from './pages/ProfileSettingsPage'
+import { InstructorDashboardPage } from './pages/InstructorDashboardPage'
 import './App.css'
 
 function AppContent() {
@@ -35,6 +36,7 @@ function AppContent() {
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/profile" element={<ProfileSettingsPage />} />
                 <Route path="/settings" element={<ProfileSettingsPage />} />
+                <Route path="/instructor" element={<InstructorDashboardPage />} />
                   <Route path="/modules/:moduleId" element={<ModulePage />} />
                   <Route path="/modules/:moduleId/assessments" element={<AssessmentPage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />

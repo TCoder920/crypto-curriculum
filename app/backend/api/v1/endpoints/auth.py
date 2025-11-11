@@ -238,3 +238,24 @@ async def change_password(
     
     return {"message": "Password changed successfully"}
 
+
+@router.get("/users", response_model=list[UserResponse])
+async def list_users(
+    current_user: User = Depends(require_role([UserRole.INSTRUCTOR, UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+    role: Optional[UserRole] = None
+):
+    """List all users (instructor/admin only)
+    
+    Optionally filter by role (student, instructor, admin)
+    """
+    query = select(User).where(User.is_active == True)
+    
+    if role:
+        query = query.where(User.role == role)
+    
+    result = await db.execute(query.order_by(User.created_at.desc()))
+    users = result.scalars().all()
+    
+    return users
+

@@ -182,6 +182,16 @@ When working on specific tasks, activate the appropriate specialized agent:
 
 ## Coordination Guidelines
 
+### Git and GitHub Operations
+
+**CRITICAL: DO NOT UPDATE GIT OR GITHUB AUTOMATICALLY**
+
+- You are NEVER to commit changes to git or push to GitHub on your own
+- You are NEVER to run `git add`, `git commit`, or `git push` commands unless explicitly instructed by the user
+- You must wait for explicit user instruction before performing any git operations
+- When the user wants git updated, they will explicitly tell you to do so
+- You may suggest git operations, but never execute them without permission
+
 ### When Starting a New Task:
 
 1. **Identify the domain**: Frontend? Backend? Database? AI Agent?

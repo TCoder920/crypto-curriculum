@@ -38,18 +38,27 @@ apiClient.interceptors.request.use(
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - but don't redirect if we're already on login/register
+      // Token expired or invalid
       const currentPath = window.location.pathname;
+      
+      // Don't redirect if we're already on auth pages
       if (currentPath !== '/login' && currentPath !== '/register') {
+        // Clear storage
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
         localStorage.removeItem('token_expiry');
-        // Only redirect if not already on auth pages
-        window.location.href = '/login';
+        
+        // Show a message to the user before redirecting
+        if (window.confirm('Your session has expired. Please log in again.')) {
+          window.location.href = '/login';
+        } else {
+          window.location.href = '/login';
+        }
       }
     }
+    
     return Promise.reject(error);
   }
 );

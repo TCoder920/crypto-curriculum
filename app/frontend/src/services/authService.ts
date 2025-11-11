@@ -79,5 +79,13 @@ export const authService = {
       new_password: newPassword,
     });
   },
+  /**
+   * Get all users (instructor/admin only)
+   */
+  async getUsers(role?: 'student' | 'instructor' | 'admin'): Promise<User[]> {
+    const params = role ? { role } : {};
+    const response = await apiClient.get<User[]>('/auth/users', { params });
+    return response.data;
+  },
 };
 

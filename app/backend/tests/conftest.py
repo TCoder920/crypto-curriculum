@@ -9,6 +9,8 @@ from app.backend.main import app
 from app.backend.models.user import User, UserRole
 from app.backend.models.module import Module, Track
 from app.backend.models.assessment import Assessment, QuestionType
+from app.backend.models.cohort import Cohort, CohortMember, CohortRole
+from app.backend.models.progress import QuizAttempt, ReviewStatus
 from app.backend.core.security import create_access_token
 
 # Use in-memory SQLite for testing
@@ -96,8 +98,9 @@ async def test_assessment(db_session: AsyncSession, test_module: Module):
 
 
 @pytest.fixture
-def test_token(test_user: User):
+async def test_token(test_user: User):
     """Create a test JWT token"""
+    # test_user is async, but pytest-asyncio will await it
     return create_access_token(data={"sub": str(test_user.id)})
 
 
@@ -107,6 +110,96 @@ def override_get_db(db_session: AsyncSession):
     async def _get_db():
         yield db_session
     return _get_db
+
+
+@pytest.fixture
+async def test_instructor(db_session: AsyncSession):
+    """Create a test instructor user"""
+    instructor = User(
+        email="instructor@example.com",
+        hashed_password="hashed_password",
+        username="instructor",
+        full_name="Test Instructor",
+        role=UserRole.INSTRUCTOR,
+        is_active=True,
+        is_verified=True,
+    )
+    db_session.add(instructor)
+    await db_session.commit()
+    await db_session.refresh(instructor)
+    return instructor
+
+
+@pytest.fixture
+async def test_instructor_token(test_instructor: User):
+    """Create a test JWT token for instructor"""
+    # test_instructor is async, but pytest-asyncio will await it
+    return create_access_token(data={"sub": str(test_instructor.id)})
+
+
+@pytest.fixture
+async def test_cohort(db_session: AsyncSession, test_instructor: User):
+    """Create a test cohort"""
+    cohort = Cohort(
+        name="Test Cohort",
+        description="Test cohort description",
+        is_active=True,
+        created_by=test_instructor.id,
+    )
+    db_session.add(cohort)
+    await db_session.commit()
+    await db_session.refresh(cohort)
+    
+    # Add instructor as member
+    member = CohortMember(
+        cohort_id=cohort.id,
+        user_id=test_instructor.id,
+        role=CohortRole.INSTRUCTOR.value,
+    )
+    db_session.add(member)
+    await db_session.commit()
+    
+    return cohort
+
+
+@pytest.fixture
+async def test_short_answer_assessment(db_session: AsyncSession, test_module: Module):
+    """Create a short answer assessment for grading tests"""
+    assessment = Assessment(
+        module_id=test_module.id,
+        question_text="Explain a concept in detail",
+        question_type=QuestionType.SHORT_ANSWER,
+        order_index=10,
+        points=10,
+        correct_answer="Expected answer",
+        explanation="Instructor will review",
+        is_active=True,
+    )
+    db_session.add(assessment)
+    await db_session.commit()
+    await db_session.refresh(assessment)
+    return assessment
+
+
+@pytest.fixture
+async def test_quiz_attempt_pending(
+    db_session: AsyncSession,
+    test_user: User,
+    test_short_answer_assessment: Assessment,
+):
+    """Create a quiz attempt that needs grading"""
+    attempt = QuizAttempt(
+        user_id=test_user.id,
+        assessment_id=test_short_answer_assessment.id,
+        user_answer="This is my detailed answer",
+        is_correct=None,
+        points_earned=None,
+        review_status=ReviewStatus.NEEDS_REVIEW,
+    )
+    db_session.add(attempt)
+    await db_session.commit()
+    await db_session.refresh(attempt)
+    return attempt
 
 
 @pytest.fixture
