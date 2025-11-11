@@ -67,7 +67,7 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
   const [selectedRole, setSelectedRole] = useState<'student' | 'instructor'>('student');
   const [loadingUsers, setLoadingUsers] = useState(false);
 
-  const handleOpenDialog = (cohort?: Cohort) => {
+  const handleOpenDialog = async (cohort?: Cohort) => {
     if (cohort) {
       setSelectedCohort(cohort);
       setFormData({
@@ -77,6 +77,27 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
         end_date: cohort.end_date || '',
         is_active: cohort.is_active,
       });
+      
+      // Load members and users for this cohort
+      try {
+        setLoadingUsers(true);
+        const allUsers = await authService.getUsers();
+        setUsers(allUsers);
+        
+        // Get current members
+        const currentMemberIds = cohort.members.map(m => m.user_id);
+        
+        // Filter out users who are already members and filter by selected role
+        const available = allUsers.filter(u => 
+          !currentMemberIds.includes(u.id) && 
+          u.role === selectedRole
+        );
+        setAvailableUsers(available);
+      } catch (err: any) {
+        console.error('Failed to load users:', err);
+      } finally {
+        setLoadingUsers(false);
+      }
     } else {
       setSelectedCohort(null);
       setFormData({
@@ -86,6 +107,8 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
         end_date: '',
         is_active: true,
       });
+      setUsers([]);
+      setAvailableUsers([]);
     }
     setError(null);
     setOpenDialog(true);
@@ -119,7 +142,11 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
       const currentMemberIds = cohort.members.map(m => m.user_id);
       
       // Filter out users who are already members
-      const available = allUsers.filter(u => !currentMemberIds.includes(u.id));
+      // Also filter by selected role to show only relevant users
+      const available = allUsers.filter(u => 
+        !currentMemberIds.includes(u.id) && 
+        u.role === selectedRole
+      );
       setAvailableUsers(available);
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to load users';
@@ -155,14 +182,16 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
       const updatedCohort = await cohortService.getCohort(selectedCohort.id);
       setSelectedCohort(updatedCohort);
       
-      // Update available users
+      // Update available users - filter by selected role
       const currentMemberIds = updatedCohort.members.map(m => m.user_id);
-      const available = users.filter(u => !currentMemberIds.includes(u.id));
+      const available = users.filter(u => 
+        !currentMemberIds.includes(u.id) && 
+        u.role === selectedRole
+      );
       setAvailableUsers(available);
       
       // Reset selection
       setSelectedUser(null);
-      setSelectedRole('student');
       
       // Refresh parent list
       onRefresh();
@@ -191,9 +220,12 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
       const updatedCohort = await cohortService.getCohort(selectedCohort.id);
       setSelectedCohort(updatedCohort);
       
-      // Update available users
+      // Update available users - filter by selected role
       const currentMemberIds = updatedCohort.members.map(m => m.user_id);
-      const available = users.filter(u => !currentMemberIds.includes(u.id));
+      const available = users.filter(u => 
+        !currentMemberIds.includes(u.id) && 
+        u.role === selectedRole
+      );
       setAvailableUsers(available);
       
       // Refresh parent list
@@ -386,9 +418,18 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
                         />
                       ) : (
                         <Chip
-                          label={cohort.is_active ? 'Active' : 'Inactive'}
-                          color={cohort.is_active ? 'success' : 'default'}
+                          label={
+                            cohort.status === 'active' ? 'Active' :
+                            cohort.status === 'upcoming' ? 'Upcoming' :
+                            'Inactive'
+                          }
+                          color={
+                            cohort.status === 'active' ? 'success' :
+                            cohort.status === 'upcoming' ? 'info' :
+                            'default'
+                          }
                           size="small"
+                          sx={{ fontWeight: 'bold' }}
                         />
                       )}
                       {cohort.cancelled_at && (
@@ -518,7 +559,7 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
       )}
 
       {/* Create/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           {selectedCohort ? 'Edit Cohort' : 'Create New Cohort'}
         </DialogTitle>
@@ -528,50 +569,250 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
               <Typography variant="body2">{error}</Typography>
             </Alert>
           )}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-            <TextField
-              label="Cohort Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              fullWidth
-            />
-            <TextField
-              label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              multiline
-              rows={3}
-              fullWidth
-            />
-            <TextField
-              label="Start Date"
-              type="date"
-              value={formData.start_date}
-              onChange={(e) => {
-                const newStartDate = e.target.value;
-                setFormData({ ...formData, start_date: newStartDate });
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+            {/* Cohort Details Section */}
+            <Box>
+              <Typography variant="h6" sx={{ mb: 2 }}>Cohort Details</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField
+                  label="Cohort Name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  multiline
+                  rows={3}
+                  fullWidth
+                />
+                <TextField
+                  label="Start Date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => {
+                    const newStartDate = e.target.value;
+                    setFormData({ ...formData, start_date: newStartDate });
+                    
+                    // If end_date is before new start_date, clear it
+                    if (formData.end_date && newStartDate && formData.end_date < newStartDate) {
+                      setFormData(prev => ({ ...prev, start_date: newStartDate, end_date: '' }));
+                    }
+                  }}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                  fullWidth
+                />
+                <TextField
+                  label="End Date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ 
+                    min: formData.start_date || new Date().toISOString().split('T')[0]
+                  }}
+                  fullWidth
+                />
+              </Box>
+            </Box>
+
+            {/* Member Management Section - Only show when editing existing cohort */}
+            {selectedCohort && (
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2 }}>Manage Members</Typography>
                 
-                // If end_date is before new start_date, clear it
-                if (formData.end_date && newStartDate && formData.end_date < newStartDate) {
-                  setFormData(prev => ({ ...prev, start_date: newStartDate, end_date: '' }));
-                }
-              }}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: new Date().toISOString().split('T')[0] }}
-              fullWidth
-            />
-            <TextField
-              label="End Date"
-              type="date"
-              value={formData.end_date}
-              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ 
-                min: formData.start_date || new Date().toISOString().split('T')[0]
-              }}
-              fullWidth
-            />
+                {/* Add Member Section */}
+                <Box sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>Add Member</Typography>
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Role</InputLabel>
+                      <Select
+                        value={selectedRole}
+                        onChange={(e) => {
+                          const newRole = e.target.value as 'student' | 'instructor';
+                          setSelectedRole(newRole);
+                          setSelectedUser(null);
+                          
+                          // Filter available users by the new role
+                          if (selectedCohort && users.length > 0) {
+                            const currentMemberIds = selectedCohort.members.map(m => m.user_id);
+                            const available = users.filter(u => 
+                              !currentMemberIds.includes(u.id) && 
+                              u.role === newRole
+                            );
+                            setAvailableUsers(available);
+                          }
+                        }}
+                        label="Role"
+                      >
+                        <MenuItem value="student">Student</MenuItem>
+                        <MenuItem value="instructor">Instructor</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <Autocomplete
+                      options={availableUsers}
+                      getOptionLabel={(option) => {
+                        const name = option.full_name || option.username || option.email;
+                        const roleLabel = option.role === 'instructor' ? 'Instructor' : 'Student';
+                        return `${name} (${option.email}) - ${roleLabel}`;
+                      }}
+                      value={selectedUser}
+                      onChange={(_, newValue) => setSelectedUser(newValue)}
+                      loading={loadingUsers}
+                      fullWidth
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={`Select ${selectedRole === 'instructor' ? 'Instructor' : 'Student'}`}
+                          placeholder={`Search ${selectedRole === 'instructor' ? 'instructors' : 'students'}...`}
+                        />
+                      )}
+                      noOptionsText={selectedRole === 'instructor' 
+                        ? 'No available instructors' 
+                        : 'No available students'}
+                    />
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    onClick={handleAddMember}
+                    disabled={!selectedUser || loading}
+                    fullWidth
+                    size="small"
+                  >
+                    Add {selectedRole === 'instructor' ? 'Instructor' : 'Student'}
+                  </Button>
+                </Box>
+
+                {/* Current Members Section */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>Current Members</Typography>
+                  {selectedCohort && selectedCohort.members.length === 0 ? (
+                    <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 2 }}>
+                      No members assigned yet
+                    </Typography>
+                  ) : (
+                    <>
+                      {/* Instructors Section */}
+                      {selectedCohort && selectedCohort.members.some(m => m.role === 'instructor') && (
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="caption" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main', display: 'block' }}>
+                            Instructors ({selectedCohort.members.filter(m => m.role === 'instructor').length})
+                          </Typography>
+                          <List dense>
+                            {selectedCohort.members
+                              .filter(m => m.role === 'instructor')
+                              .map((member: CohortMember) => {
+                                const user = member.user;
+                                return (
+                                  <ListItem 
+                                    key={member.id}
+                                    sx={{ 
+                                      border: '1px solid', 
+                                      borderColor: 'divider', 
+                                      borderRadius: 1, 
+                                      mb: 0.5,
+                                      py: 0.5
+                                    }}
+                                  >
+                                    <ListItemText
+                                      primary={user?.full_name || user?.username || user?.email || 'Unknown User'}
+                                      secondary={
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            {user?.email}
+                                          </Typography>
+                                          <Chip
+                                            label="Instructor"
+                                            size="small"
+                                            color="primary"
+                                          />
+                                        </Box>
+                                      }
+                                    />
+                                    <ListItemSecondaryAction>
+                                      <IconButton
+                                        edge="end"
+                                        onClick={() => handleRemoveMember(member.user_id)}
+                                        disabled={loading}
+                                        size="small"
+                                        sx={{ color: 'error.main' }}
+                                        title="Remove instructor"
+                                      >
+                                        <Delete fontSize="small" />
+                                      </IconButton>
+                                    </ListItemSecondaryAction>
+                                  </ListItem>
+                                );
+                              })}
+                          </List>
+                        </Box>
+                      )}
+                      
+                      {/* Students Section */}
+                      {selectedCohort && selectedCohort.members.some(m => m.role === 'student') && (
+                        <Box>
+                          <Typography variant="caption" sx={{ mb: 1, fontWeight: 'bold', color: 'text.primary', display: 'block' }}>
+                            Students ({selectedCohort.members.filter(m => m.role === 'student').length})
+                          </Typography>
+                          <List dense>
+                            {selectedCohort.members
+                              .filter(m => m.role === 'student')
+                              .map((member: CohortMember) => {
+                                const user = member.user;
+                                return (
+                                  <ListItem 
+                                    key={member.id}
+                                    sx={{ 
+                                      border: '1px solid', 
+                                      borderColor: 'divider', 
+                                      borderRadius: 1, 
+                                      mb: 0.5,
+                                      py: 0.5
+                                    }}
+                                  >
+                                    <ListItemText
+                                      primary={user?.full_name || user?.username || user?.email || 'Unknown User'}
+                                      secondary={
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            {user?.email}
+                                          </Typography>
+                                          <Chip
+                                            label="Student"
+                                            size="small"
+                                            color="default"
+                                          />
+                                        </Box>
+                                      }
+                                    />
+                                    <ListItemSecondaryAction>
+                                      <IconButton
+                                        edge="end"
+                                        onClick={() => handleRemoveMember(member.user_id)}
+                                        disabled={loading}
+                                        size="small"
+                                        sx={{ color: 'error.main' }}
+                                        title="Remove student"
+                                      >
+                                        <Delete fontSize="small" />
+                                      </IconButton>
+                                    </ListItemSecondaryAction>
+                                  </ListItem>
+                                );
+                              })}
+                          </List>
+                        </Box>
+                      )}
+                    </>
+                  )}
+                </Box>
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
@@ -609,7 +850,21 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
                 <InputLabel>Role</InputLabel>
                 <Select
                   value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as 'student' | 'instructor')}
+                  onChange={(e) => {
+                    const newRole = e.target.value as 'student' | 'instructor';
+                    setSelectedRole(newRole);
+                    setSelectedUser(null); // Clear selected user when role changes
+                    
+                    // Filter available users by the new role
+                    if (selectedCohort && users.length > 0) {
+                      const currentMemberIds = selectedCohort.members.map(m => m.user_id);
+                      const available = users.filter(u => 
+                        !currentMemberIds.includes(u.id) && 
+                        u.role === newRole
+                      );
+                      setAvailableUsers(available);
+                    }
+                  }}
                   label="Role"
                 >
                   <MenuItem value="student">Student</MenuItem>
@@ -618,7 +873,11 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
               </FormControl>
               <Autocomplete
                 options={availableUsers}
-                getOptionLabel={(option) => `${option.full_name || option.username || option.email} (${option.email})`}
+                getOptionLabel={(option) => {
+                  const name = option.full_name || option.username || option.email;
+                  const roleLabel = option.role === 'instructor' ? 'Instructor' : 'Student';
+                  return `${name} (${option.email}) - ${roleLabel}`;
+                }}
                 value={selectedUser}
                 onChange={(_, newValue) => setSelectedUser(newValue)}
                 loading={loadingUsers}
@@ -626,10 +885,13 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Select User"
-                    placeholder="Search users..."
+                    label={`Select ${selectedRole === 'instructor' ? 'Instructor' : 'Student'}`}
+                    placeholder={`Search ${selectedRole === 'instructor' ? 'instructors' : 'students'}...`}
                   />
                 )}
+                noOptionsText={selectedRole === 'instructor' 
+                  ? 'No available instructors' 
+                  : 'No available students'}
               />
             </Box>
             <Button
@@ -638,7 +900,7 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
               disabled={!selectedUser || loading}
               fullWidth
             >
-              Add Member
+              Add {selectedRole === 'instructor' ? 'Instructor' : 'Student'}
             </Button>
           </Box>
 
@@ -650,42 +912,101 @@ export const CohortManagement: React.FC<CohortManagementProps> = ({ cohorts, onR
                 No members assigned yet
               </Typography>
             ) : (
-              <List>
-                {selectedCohort?.members.map((member: CohortMember) => {
-                  const user = member.user;
-                  return (
-                    <ListItem key={member.id}>
-                      <ListItemText
-                        primary={user?.full_name || user?.username || user?.email || 'Unknown User'}
-                        secondary={
-                          <Box>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              {user?.email}
-                            </Typography>
-                            <Chip
-                              label={member.role}
-                              size="small"
-                              color={member.role === 'instructor' ? 'primary' : 'default'}
-                              sx={{ mt: 0.5 }}
-                            />
-                          </Box>
-                        }
-                      />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleRemoveMember(member.user_id)}
-                          disabled={loading}
-                          sx={{ color: 'error.main' }}
-                          title="Remove member"
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  );
-                })}
-              </List>
+              <>
+                {/* Instructors Section */}
+                {selectedCohort && selectedCohort.members.some(m => m.role === 'instructor') && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main' }}>
+                      Instructors ({selectedCohort.members.filter(m => m.role === 'instructor').length})
+                    </Typography>
+                    <List>
+                      {selectedCohort.members
+                        .filter(m => m.role === 'instructor')
+                        .map((member: CohortMember) => {
+                          const user = member.user;
+                          return (
+                            <ListItem key={member.id}>
+                              <ListItemText
+                                primary={user?.full_name || user?.username || user?.email || 'Unknown User'}
+                                secondary={
+                                  <Box>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                      {user?.email}
+                                    </Typography>
+                                    <Chip
+                                      label="Instructor"
+                                      size="small"
+                                      color="primary"
+                                      sx={{ mt: 0.5 }}
+                                    />
+                                  </Box>
+                                }
+                              />
+                              <ListItemSecondaryAction>
+                                <IconButton
+                                  edge="end"
+                                  onClick={() => handleRemoveMember(member.user_id)}
+                                  disabled={loading}
+                                  sx={{ color: 'error.main' }}
+                                  title="Remove instructor"
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </ListItemSecondaryAction>
+                            </ListItem>
+                          );
+                        })}
+                    </List>
+                  </Box>
+                )}
+                
+                {/* Students Section */}
+                {selectedCohort && selectedCohort.members.some(m => m.role === 'student') && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: 'text.primary' }}>
+                      Students ({selectedCohort.members.filter(m => m.role === 'student').length})
+                    </Typography>
+                    <List>
+                      {selectedCohort.members
+                        .filter(m => m.role === 'student')
+                        .map((member: CohortMember) => {
+                          const user = member.user;
+                          return (
+                            <ListItem key={member.id}>
+                              <ListItemText
+                                primary={user?.full_name || user?.username || user?.email || 'Unknown User'}
+                                secondary={
+                                  <Box>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                      {user?.email}
+                                    </Typography>
+                                    <Chip
+                                      label="Student"
+                                      size="small"
+                                      color="default"
+                                      sx={{ mt: 0.5 }}
+                                    />
+                                  </Box>
+                                }
+                              />
+                              <ListItemSecondaryAction>
+                                <IconButton
+                                  edge="end"
+                                  onClick={() => handleRemoveMember(member.user_id)}
+                                  disabled={loading}
+                                  sx={{ color: 'error.main' }}
+                                  title="Remove student"
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </ListItemSecondaryAction>
+                            </ListItem>
+                          );
+                        })}
+                    </List>
+                  </Box>
+                )}
+              </>
             )}
           </Box>
         </DialogContent>

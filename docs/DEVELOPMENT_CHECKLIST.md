@@ -74,8 +74,8 @@ Refer to `docs/deployment/local-development.md` for a narrative walkthrough of t
 - [x] Create database `crypto_curriculum`
 - [x] Generate migrations as needed (16 core tables)
 - [x] Apply migrations: `alembic upgrade head`
-- [x] Dry run seed script: `python seed_local.py --verbose`
-- [x] Seed database: `python seed_local.py --reset --commit`
+- [x] Dry run seed script: `python scripts/seed-db.py --verbose`
+- [x] Seed database: `python scripts/seed-db.py --reset --commit`
 - [x] Verify sample data (modules, lessons, cohorts, attempts)
 
 ### 2.6 Local Smoke Test

@@ -152,6 +152,7 @@ class CohortResponse(BaseModel):
     start_date: Optional[date]
     end_date: Optional[date]
     is_active: bool
+    status: str = "active"  # "active", "upcoming", or "inactive"
     cancelled_at: Optional[datetime] = None
     created_by: Optional[int]
     created_at: datetime

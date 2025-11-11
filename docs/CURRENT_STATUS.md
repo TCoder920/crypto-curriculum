@@ -157,7 +157,7 @@ GET /api/v1/modules/15/assessments HTTP/1.1" 404 Not Found
 **Files to Check:**
 - `app/backend/main.py` - Router registration
 - `app/backend/api/v1/endpoints/assessment.py` - Endpoint definition
-- `app/backend/seed_local.py` - Assessment seeding
+- `scripts/seed-db.py` - Assessment seeding
 - Database - Verify assessments exist for modules 1 and 15
 
 ### 3. MUI Grid Migration Warnings
@@ -193,7 +193,7 @@ MUI Grid: The `md` prop has been removed.
 2. **Check Database State**
    - Verify assessments are seeded for all modules
    - Check if modules 1 and 15 exist in database
-   - Run seed script if needed: `python -m app.backend.seed_local`
+   - Run seed script if needed: `python scripts/seed-db.py --reset --commit`
 
 3. **Test Endpoint Directly**
    - Use curl or Postman to test: `GET http://localhost:9000/api/v1/modules/1/assessments`

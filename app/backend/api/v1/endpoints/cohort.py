@@ -1,7 +1,7 @@
 """Cohort management endpoints"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, text, delete
+from sqlalchemy import select, func, and_, or_, text, delete, not_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
@@ -25,6 +25,9 @@ from app.backend.api.v1.endpoints.auth import require_role
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# Maximum students per cohort (instructors don't count toward this limit)
+MAX_COHORT_STUDENTS = 25
+
 
 def calculate_is_active(start_date: Optional[date], end_date: Optional[date]) -> bool:
     """Calculate if cohort is active based on dates"""
@@ -43,6 +46,36 @@ def calculate_is_active(start_date: Optional[date], end_date: Optional[date]) ->
     
     # Both dates set, check if today is between them
     return start_date <= today <= end_date
+
+
+def calculate_cohort_status(start_date: Optional[date], end_date: Optional[date]) -> str:
+    """Calculate cohort status: 'active', 'upcoming', or 'inactive'"""
+    if start_date is None and end_date is None:
+        return "active"  # No dates set, default to active
+    
+    today = date.today()
+    
+    # If only start_date is set
+    if start_date is not None and end_date is None:
+        if today < start_date:
+            return "upcoming"
+        elif today >= start_date:
+            return "active"
+    
+    # If only end_date is set
+    if start_date is None and end_date is not None:
+        if today <= end_date:
+            return "active"
+        else:
+            return "inactive"
+    
+    # Both dates set
+    if today < start_date:
+        return "upcoming"
+    elif start_date <= today <= end_date:
+        return "active"
+    else:
+        return "inactive"
 
 
 @router.post("/cohorts", response_model=CohortResponse, status_code=status.HTTP_201_CREATED)
@@ -176,8 +209,9 @@ async def create_cohort(
         }
         member_responses.append(CohortMemberResponse(**member_data))
     
-    # Recalculate is_active based on dates
+    # Recalculate is_active and status based on dates
     calculated_is_active = calculate_is_active(cohort.start_date, cohort.end_date)
+    calculated_status = calculate_cohort_status(cohort.start_date, cohort.end_date)
     
     # Update database if status changed
     if calculated_is_active != cohort.is_active:
@@ -192,6 +226,7 @@ async def create_cohort(
         start_date=cohort.start_date,
         end_date=cohort.end_date,
         is_active=calculated_is_active,
+        status=calculated_status,
         cancelled_at=cohort.cancelled_at,
         created_by=cohort.created_by,
         created_at=cohort.created_at,
@@ -278,8 +313,9 @@ async def update_cohort(
         }
         member_responses.append(CohortMemberResponse(**member_data))
     
-    # Recalculate is_active based on dates
+    # Recalculate is_active and status based on dates
     calculated_is_active = calculate_is_active(cohort.start_date, cohort.end_date)
+    calculated_status = calculate_cohort_status(cohort.start_date, cohort.end_date)
     
     # Update database if status changed (unless explicitly set to False)
     if cohort_data.is_active is not False and calculated_is_active != cohort.is_active:
@@ -294,6 +330,7 @@ async def update_cohort(
         start_date=cohort.start_date,
         end_date=cohort.end_date,
         is_active=cohort.is_active,
+        status=calculated_status,
         cancelled_at=cohort.cancelled_at,
         created_by=cohort.created_by,
         created_at=cohort.created_at,
@@ -373,6 +410,9 @@ async def cancel_cohort(
         }
         member_responses.append(CohortMemberResponse(**member_data))
     
+    # Calculate status for cancelled cohort
+    calculated_status = calculate_cohort_status(cohort.start_date, cohort.end_date)
+    
     return CohortResponse(
         id=cohort.id,
         name=cohort.name,
@@ -380,6 +420,7 @@ async def cancel_cohort(
         start_date=cohort.start_date,
         end_date=cohort.end_date,
         is_active=False,
+        status=calculated_status,
         cancelled_at=cohort.cancelled_at,
         created_by=cohort.created_by,
         created_at=cohort.created_at,
@@ -464,22 +505,68 @@ async def delete_cohort(
 async def list_cohorts(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-    active_only: bool = False
+    active_only: bool = False,
+    available: bool = False
 ):
-    """List all cohorts (instructors/admins see all, students see only their cohorts)"""
-    # Students can only see cohorts they're members of
+    """List all cohorts
+    
+    - Instructors/admins: see all cohorts
+    - Students: 
+      * If available=True: see all active cohorts they can join (not cancelled, not full, not already a member)
+      * If available=False: see only cohorts they're members of
+    """
     if current_user.role == UserRole.STUDENT:
-        # Get cohorts where user is a member
-        members_result = await db.execute(
-            select(CohortMember.cohort_id)
-            .where(CohortMember.user_id == current_user.id)
-        )
-        cohort_ids = [row[0] for row in members_result.all()]
-        
-        if not cohort_ids:
-            return CohortListResponse(cohorts=[], total=0)
-        
-        query = select(Cohort).where(Cohort.id.in_(cohort_ids))
+        if available:
+            # Students can see all available cohorts to join
+            # Get cohorts where user is NOT a member, is active, not cancelled, and not full
+            members_result = await db.execute(
+                select(CohortMember.cohort_id)
+                .where(CohortMember.user_id == current_user.id)
+            )
+            member_cohort_ids = [row[0] for row in members_result.all()]
+            
+            # Get all active or upcoming, non-cancelled cohorts
+            # Include cohorts that are active OR have a future start_date (upcoming)
+            # Exclude inactive cohorts (past end_date)
+            today = date.today()
+            query = select(Cohort).where(
+                and_(
+                    Cohort.cancelled_at.is_(None),
+                    or_(
+                        # Active cohorts (currently running)
+                        and_(
+                            Cohort.is_active == True,
+                            or_(
+                                Cohort.start_date <= today,
+                                Cohort.start_date.is_(None)
+                            )
+                        ),
+                        # Upcoming cohorts (future start_date)
+                        Cohort.start_date > today,
+                        # Cohorts with no dates (always available)
+                        and_(
+                            Cohort.start_date.is_(None),
+                            Cohort.end_date.is_(None)
+                        )
+                    )
+                )
+            )
+            
+            if member_cohort_ids:
+                # Exclude cohorts user is already a member of
+                query = query.where(not_(Cohort.id.in_(member_cohort_ids)))
+        else:
+            # Get cohorts where user is a member
+            members_result = await db.execute(
+                select(CohortMember.cohort_id)
+                .where(CohortMember.user_id == current_user.id)
+            )
+            cohort_ids = [row[0] for row in members_result.all()]
+            
+            if not cohort_ids:
+                return CohortListResponse(cohorts=[], total=0)
+            
+            query = select(Cohort).where(Cohort.id.in_(cohort_ids))
     else:
         # Instructors and admins see all cohorts
         query = select(Cohort)
@@ -519,14 +606,22 @@ async def list_cohorts(
             }
             member_responses.append(CohortMemberResponse(**member_data))
         
-        # Recalculate is_active based on dates
+        # Recalculate is_active and status based on dates
         calculated_is_active = calculate_is_active(cohort.start_date, cohort.end_date)
+        calculated_status = calculate_cohort_status(cohort.start_date, cohort.end_date)
         
         # Update database if status changed
         if calculated_is_active != cohort.is_active:
             cohort.is_active = calculated_is_active
             await db.commit()
             await db.refresh(cohort)
+        
+        # Filter out full cohorts for students when available=True
+        # Only count students toward the limit
+        if current_user.role == UserRole.STUDENT and available:
+            student_count_in_cohort = sum(1 for m in member_responses if m.role == CohortRole.STUDENT.value)
+            if student_count_in_cohort >= MAX_COHORT_STUDENTS:
+                continue  # Skip full cohorts (25 students)
         
         cohort_responses.append(CohortResponse(
             id=cohort.id,
@@ -535,6 +630,7 @@ async def list_cohorts(
             start_date=cohort.start_date,
             end_date=cohort.end_date,
             is_active=calculated_is_active,
+            status=calculated_status,
             cancelled_at=cohort.cancelled_at,
             created_by=cohort.created_by,
             created_at=cohort.created_at,
@@ -609,8 +705,9 @@ async def get_cohort(
         }
         member_responses.append(CohortMemberResponse(**member_data))
     
-    # Recalculate is_active based on dates
+    # Recalculate is_active and status based on dates
     calculated_is_active = calculate_is_active(cohort.start_date, cohort.end_date)
+    calculated_status = calculate_cohort_status(cohort.start_date, cohort.end_date)
     
     # Update database if status changed
     if calculated_is_active != cohort.is_active:
@@ -625,6 +722,7 @@ async def get_cohort(
         start_date=cohort.start_date,
         end_date=cohort.end_date,
         is_active=calculated_is_active,
+        status=calculated_status,
         cancelled_at=cohort.cancelled_at,
         created_by=cohort.created_by,
         created_at=cohort.created_at,
@@ -680,6 +778,24 @@ async def add_cohort_member(
             detail="User is already a member of this cohort"
         )
     
+    # Check student limit (25 max) - only students count toward the limit
+    current_students = await db.execute(
+        select(func.count(CohortMember.id))
+        .where(
+            and_(
+                CohortMember.cohort_id == cohort_id,
+                CohortMember.role == CohortRole.STUDENT.value
+            )
+        )
+    )
+    student_count = current_students.scalar()
+    if member_data.role == CohortRole.STUDENT and student_count >= MAX_COHORT_STUDENTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cohort has reached the maximum capacity of {MAX_COHORT_STUDENTS} students"
+        )
+    # Instructors don't count toward the limit, so no check needed for instructor role
+    
     # Create new member
     new_member = CohortMember(
         cohort_id=cohort_id,
@@ -704,6 +820,180 @@ async def add_cohort_member(
             "username": user.username
         } if user else None
     )
+
+
+@router.post("/cohorts/{cohort_id}/join", response_model=CohortMemberResponse, status_code=status.HTTP_201_CREATED)
+async def join_cohort(
+    cohort_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Allow students to join a cohort (self-enrollment)"""
+    # Only students can use this endpoint
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can join cohorts using this endpoint"
+        )
+    
+    # Check if cohort exists
+    result = await db.execute(select(Cohort).where(Cohort.id == cohort_id))
+    cohort = result.scalar_one_or_none()
+    
+    if not cohort:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cohort not found"
+        )
+    
+    # Check if cohort is cancelled
+    if cohort.cancelled_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot join a cancelled cohort"
+        )
+    
+    # Check cohort status - allow joining active or upcoming cohorts
+    cohort_status = calculate_cohort_status(cohort.start_date, cohort.end_date)
+    if cohort_status == "inactive":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot join an inactive cohort (cohort has ended)"
+        )
+    
+    # Check if user is already a member
+    existing_member = await db.execute(
+        select(CohortMember)
+        .where(
+            and_(
+                CohortMember.cohort_id == cohort_id,
+                CohortMember.user_id == current_user.id
+            )
+        )
+    )
+    if existing_member.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are already a member of this cohort"
+        )
+    
+    # Check student limit (25 max) - only students count toward the limit
+    current_students = await db.execute(
+        select(func.count(CohortMember.id))
+        .where(
+            and_(
+                CohortMember.cohort_id == cohort_id,
+                CohortMember.role == CohortRole.STUDENT.value
+            )
+        )
+    )
+    student_count = current_students.scalar()
+    if student_count >= MAX_COHORT_STUDENTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"This cohort has reached the maximum capacity of {MAX_COHORT_STUDENTS} students"
+        )
+    
+    # Create new member as student
+    new_member = CohortMember(
+        cohort_id=cohort_id,
+        user_id=current_user.id,
+        role=CohortRole.STUDENT.value
+    )
+    
+    try:
+        db.add(new_member)
+        await db.commit()
+        await db.refresh(new_member)
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error joining cohort: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error joining cohort: {str(e)}"
+        )
+    
+    # Fetch user details for response
+    user_result = await db.execute(select(User).where(User.id == current_user.id))
+    user = user_result.scalar_one_or_none()
+    
+    return CohortMemberResponse(
+        id=new_member.id,
+        cohort_id=new_member.cohort_id,
+        user_id=new_member.user_id,
+        role=new_member.role,
+        joined_at=new_member.joined_at,
+        user={
+            "id": user.id if user else None,
+            "email": user.email if user else None,
+            "full_name": user.full_name if user else None,
+            "username": user.username if user else None
+        } if user else None
+    )
+
+
+@router.delete("/cohorts/{cohort_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
+async def leave_cohort(
+    cohort_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Allow students to remove themselves from a cohort (self-removal)"""
+    # Only students can use this endpoint
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can leave cohorts using this endpoint"
+        )
+    
+    # Check if cohort exists
+    result = await db.execute(select(Cohort).where(Cohort.id == cohort_id))
+    cohort = result.scalar_one_or_none()
+    
+    if not cohort:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cohort not found"
+        )
+    
+    # Find member record
+    member_result = await db.execute(
+        select(CohortMember)
+        .where(
+            and_(
+                CohortMember.cohort_id == cohort_id,
+                CohortMember.user_id == current_user.id
+            )
+        )
+    )
+    member = member_result.scalar_one_or_none()
+    
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="You are not a member of this cohort"
+        )
+    
+    # Verify user is a student (not an instructor)
+    if member.role != CohortRole.STUDENT.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Instructors cannot leave cohorts using this endpoint. Contact an administrator."
+        )
+    
+    # Remove member
+    try:
+        await db.execute(delete(CohortMember).where(CohortMember.id == member.id))
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error leaving cohort: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error leaving cohort: {str(e)}"
+        )
+    
+    return None
 
 
 @router.delete("/cohorts/{cohort_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

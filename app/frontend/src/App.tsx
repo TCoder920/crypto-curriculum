@@ -13,6 +13,7 @@ import { AssessmentPage } from './pages/AssessmentPage'
 import { ProgressPage } from './pages/ProgressPage'
 import { ProfileSettingsPage } from './pages/ProfileSettingsPage'
 import { InstructorDashboardPage } from './pages/InstructorDashboardPage'
+import { CohortsPage } from './pages/CohortsPage'
 import './App.css'
 
 function AppContent() {
@@ -33,10 +34,11 @@ function AppContent() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/modules" element={<ModulesListPage />} />
                   <Route path="/assessments" element={<AssessmentsListPage />} />
-                <Route path="/progress" element={<ProgressPage />} />
-                <Route path="/profile" element={<ProfileSettingsPage />} />
-                <Route path="/settings" element={<ProfileSettingsPage />} />
-                <Route path="/instructor" element={<InstructorDashboardPage />} />
+                  <Route path="/progress" element={<ProgressPage />} />
+                  <Route path="/profile" element={<ProfileSettingsPage />} />
+                  <Route path="/settings" element={<ProfileSettingsPage />} />
+                  <Route path="/instructor" element={<InstructorDashboardPage />} />
+                  <Route path="/cohorts" element={<CohortsPage />} />
                   <Route path="/modules/:moduleId" element={<ModulePage />} />
                   <Route path="/modules/:moduleId/assessments" element={<AssessmentPage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />

@@ -22,6 +22,7 @@ export interface Cohort {
   start_date?: string;
   end_date?: string;
   is_active: boolean;
+  status: 'active' | 'upcoming' | 'inactive';
   cancelled_at?: string;
   created_by?: number;
   created_at: string;
@@ -62,8 +63,10 @@ export const cohortService = {
   /**
    * Get all cohorts
    */
-  async getCohorts(activeOnly?: boolean): Promise<CohortListResponse> {
-    const params = activeOnly ? { active_only: true } : {};
+  async getCohorts(activeOnly?: boolean, available?: boolean): Promise<CohortListResponse> {
+    const params: any = {};
+    if (activeOnly) params.active_only = true;
+    if (available) params.available = true;
     const response = await apiClient.get<CohortListResponse>('/cohorts', { params });
     return response.data;
   },
@@ -120,6 +123,21 @@ export const cohortService = {
    */
   async deleteCohort(cohortId: number): Promise<void> {
     await apiClient.delete(`/cohorts/${cohortId}`);
+  },
+
+  /**
+   * Join a cohort (student self-enrollment)
+   */
+  async joinCohort(cohortId: number): Promise<CohortMember> {
+    const response = await apiClient.post<CohortMember>(`/cohorts/${cohortId}/join`);
+    return response.data;
+  },
+
+  /**
+   * Leave a cohort (student self-removal)
+   */
+  async leaveCohort(cohortId: number): Promise<void> {
+    await apiClient.delete(`/cohorts/${cohortId}/leave`);
   },
 };
 

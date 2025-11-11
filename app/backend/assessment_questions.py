@@ -3,11 +3,178 @@ from typing import List
 from app.backend.models.assessment import Assessment, QuestionType
 
 
+def get_module_1_assessments() -> List[Assessment]:
+    """Module 1: Blockchain Technology - 10 multiple-choice questions"""
+    return [
+        Assessment(
+            module_id=1,
+            question_text="What is a distributed ledger?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=1,
+            points=10,
+            options={
+                "A": "A centralized database managed by a single authority",
+                "B": "A shared database that is synchronized across multiple locations",
+                "C": "A cloud storage service",
+                "D": "A type of spreadsheet"
+            },
+            correct_answer="B",
+            explanation="A distributed ledger is a shared database that is synchronized across multiple locations, participants, or institutions. Unlike a centralized database, no single party controls it.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="What is the primary purpose of a blockchain?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=2,
+            points=10,
+            options={
+                "A": "To store large amounts of data",
+                "B": "To create an immutable record of transactions",
+                "C": "To speed up internet connections",
+                "D": "To replace traditional databases"
+            },
+            correct_answer="B",
+            explanation="The primary purpose of a blockchain is to create an immutable, tamper-proof record of transactions that can be verified by all participants.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="What is a block in a blockchain?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=3,
+            points=10,
+            options={
+                "A": "A physical storage device",
+                "B": "A collection of transactions grouped together and cryptographically linked to the previous block",
+                "C": "A type of cryptocurrency",
+                "D": "A network node"
+            },
+            correct_answer="B",
+            explanation="A block is a collection of transactions that are grouped together and cryptographically linked to the previous block, forming a chain.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="What does 'immutable' mean in the context of blockchain?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=4,
+            points=10,
+            options={
+                "A": "Can be easily changed",
+                "B": "Cannot be altered or deleted once recorded",
+                "C": "Requires permission to view",
+                "D": "Stored in multiple locations"
+            },
+            correct_answer="B",
+            explanation="Immutable means that once data is recorded on the blockchain, it cannot be altered or deleted. This is a key security feature of blockchain technology.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="Does blockchain require a central authority to validate transactions?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=5,
+            points=10,
+            options={
+                "A": "Yes, all blockchains require a central authority",
+                "B": "No, blockchain is decentralized and uses consensus mechanisms",
+                "C": "Only private blockchains require central authority",
+                "D": "It depends on the type of data being stored"
+            },
+            correct_answer="B",
+            explanation="Blockchain is decentralized and does not require a central authority. Transactions are validated by network participants through consensus mechanisms like Proof-of-Work or Proof-of-Stake.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="Can a block be easily modified once it's added to the blockchain?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=6,
+            points=10,
+            options={
+                "A": "Yes, blocks can be edited at any time",
+                "B": "No, blocks are cryptographically linked making modification extremely difficult",
+                "C": "Only the most recent block can be modified",
+                "D": "Blocks can be modified with special permission"
+            },
+            correct_answer="B",
+            explanation="Blocks are cryptographically linked, making it extremely difficult to modify past blocks without invalidating the entire chain. This immutability is a core security feature.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="What makes blockchain technology secure?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=7,
+            points=10,
+            options={
+                "A": "Only authorized users can access it",
+                "B": "Cryptographic hashing, distributed consensus, and immutability",
+                "C": "It's stored on a single secure server",
+                "D": "It requires passwords to view"
+            },
+            correct_answer="B",
+            explanation="Blockchain security comes from multiple factors: cryptographic hashing links blocks together, distributed consensus ensures agreement, and immutability prevents tampering.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="What is a real-world application of blockchain technology besides cryptocurrency?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=8,
+            points=10,
+            options={
+                "A": "Blockchain can only be used for cryptocurrencies",
+                "B": "Supply chain tracking, digital identity, voting systems, and medical records",
+                "C": "Only financial transactions",
+                "D": "Only data storage"
+            },
+            correct_answer="B",
+            explanation="Blockchain has many applications beyond cryptocurrencies, including supply chain management, digital identity verification, secure voting systems, medical record keeping, and more.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="How are blocks connected in a blockchain?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=9,
+            points=10,
+            options={
+                "A": "Blocks are stored in the same physical location",
+                "B": "Each block contains a hash of the previous block, creating a cryptographic chain",
+                "C": "Blocks are connected by network cables",
+                "D": "Blocks are linked by user permissions"
+            },
+            correct_answer="B",
+            explanation="Blocks are connected cryptographically - each block contains a hash (digital fingerprint) of the previous block, creating an unbreakable chain. Any modification to a block would change its hash and break the chain.",
+            is_active=True,
+        ),
+        Assessment(
+            module_id=1,
+            question_text="What is the main difference between a blockchain and a traditional database?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=10,
+            points=10,
+            options={
+                "A": "There is no difference",
+                "B": "Blockchain is decentralized and immutable, while traditional databases are centralized and can be modified",
+                "C": "Blockchain is faster than traditional databases",
+                "D": "Traditional databases are more secure"
+            },
+            correct_answer="B",
+            explanation="The key differences are: blockchain is decentralized (no single point of control) and immutable (data cannot be easily changed), while traditional databases are typically centralized and allow modifications.",
+            is_active=True,
+        ),
+    ]
+
+
 def get_all_assessments() -> dict[int, List[Assessment]]:
     """Returns a dictionary mapping module_id to list of Assessment objects"""
     assessments = {}
     
-    # Module 1 is already defined in seed_local.py, so we start with Module 2
+    # All modules including Module 1
+    assessments[1] = get_module_1_assessments()
     assessments[2] = get_module_2_assessments()
     assessments[3] = get_module_3_assessments()
     assessments[4] = get_module_4_assessments()

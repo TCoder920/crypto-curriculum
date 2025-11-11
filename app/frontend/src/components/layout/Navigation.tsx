@@ -56,12 +56,14 @@ export const Navigation: React.FC = () => {
   };
 
   const isInstructor = user?.role === 'instructor' || user?.role === 'admin';
+  const isStudent = user?.role === 'student';
   
   const navItems = [
     { label: 'HOME', path: '/', icon: <Home /> },
     { label: 'MODULES', path: '/modules', icon: <School /> },
     { label: 'ASSESSMENTS', path: '/assessments', icon: <Assessment /> },
     { label: 'PROGRESS', path: '/progress', icon: <TrendingUp /> },
+    ...(isStudent ? [{ label: 'COHORTS', path: '/cohorts', icon: <Groups /> }] : []),
     ...(isInstructor ? [{ label: 'INSTRUCTOR', path: '/instructor', icon: <Groups /> }] : []),
   ];
 
