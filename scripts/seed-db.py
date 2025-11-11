@@ -25,6 +25,13 @@ from typing import Dict, Iterable, List, Tuple
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import SQLAlchemyError
+from passlib.context import CryptContext
+
+# Password hashing context (matches backend security)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Default password for all seeded users (development only)
+DEFAULT_PASSWORD = "password123"
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 CURRICULUM_DIR = BASE_DIR / "curriculum"
@@ -70,10 +77,17 @@ def new_uuid() -> str:
 
 
 def resolve_track(module_id: int) -> str:
+    """Resolve track name and return uppercase enum value for database"""
+    track_map = {
+        "user": "USER",
+        "power-user": "ANALYST",
+        "developer": "DEVELOPER",
+        "architect": "ARCHITECT",
+    }
     for track, module_range in MODULE_TRACKS.items():
         if module_id in module_range:
-            return track
-    return "user"
+            return track_map.get(track, "USER")
+    return "USER"
 
 
 def load_modules_from_outline(path: Path) -> List[Dict[str, object]]:
@@ -188,6 +202,10 @@ def generate_modules_and_lessons(modules_outline: List[Dict[str, object]], lesso
     module_rows: List[Dict[str, object]] = []
     lesson_rows: List[Dict[str, object]] = []
     published_cutoff = datetime.utcnow() - timedelta(days=7)
+    
+    # Lesson IDs must be integers (matching Lesson model: id = Column(Integer, ...))
+    # Start from 1 and increment for each lesson
+    lesson_id = 1
 
     for module in modules_outline:
         module_id = module["id"]  # type: ignore[index]
@@ -198,10 +216,12 @@ def generate_modules_and_lessons(modules_outline: List[Dict[str, object]], lesso
                 "title": module["title"],
                 "description": module.get("summary") or None,
                 "track": track,
-                "duration_hours": None,
+                "duration_hours": 2.0,  # Default duration for all modules
                 "order_index": module_id,
+                "is_active": True,
                 "is_published": True,
-                "prerequisites": list(range(1, module_id)) if module_id > 1 else [],
+                "prerequisites": json.dumps(list(range(1, module_id)) if module_id > 1 else []),
+                "learning_objectives": json.dumps([]),
                 "created_at": published_cutoff,
                 "updated_at": datetime.utcnow(),
             }
@@ -211,17 +231,19 @@ def generate_modules_and_lessons(modules_outline: List[Dict[str, object]], lesso
         for order_index, lesson in enumerate(lessons, start=1):
             lesson_rows.append(
                 {
-                    "id": new_uuid(),
+                    "id": lesson_id,
                     "module_id": module_id,
                     "title": lesson["title"],
                     "content": lesson.get("content") or "",
                     "lesson_type": "reading",
                     "order_index": order_index,
                     "estimated_minutes": 20,
+                    "is_active": True,
                     "created_at": datetime.utcnow(),
                     "updated_at": datetime.utcnow(),
                 }
             )
+            lesson_id += 1
 
     logging.info("Prepared %s modules and %s lessons", len(module_rows), len(lesson_rows))
     return module_rows, lesson_rows
@@ -235,31 +257,34 @@ def generate_assessments(modules: List[Dict[str, object]]) -> List[Dict[str, obj
         ("C", "Comparison question"),
         ("D", "Common misconception"),
     ]
+    
+    # Assessment IDs must be integers (matching Assessment model: id = Column(Integer, ...))
+    # Start from 1 and increment for each assessment
+    assessment_id = 1
 
     for module in modules:
         module_id = module["id"]
         module_title = module["title"]
         base_question = f"in Module {module_id}: {module_title}"
         distribution = [
-            ("multiple-choice", 3),
-            ("true-false", 2),
-            ("short-answer", 3),
-            ("coding-task", 2),
+            ("MULTIPLE_CHOICE", 3),  # Use uppercase to match database enum
+            ("TRUE_FALSE", 2),
+            ("SHORT_ANSWER", 3),
+            ("CODING_TASK", 2),
         ]
         order_index = 1
         for question_type, count in distribution:
             for i in range(count):
-                assessment_id = new_uuid()
                 question_text = f"Placeholder question {order_index} {base_question}"
                 options = None
                 correct_answer = None
 
-                if question_type == "multiple-choice":
+                if question_type == "MULTIPLE_CHOICE":
                     choices = {key: f"{value} ({module_title})" for key, value in mc_template}
                     options = json.dumps(choices)
                     correct_answer = random.choice(list(choices.keys()))
-                elif question_type == "true-false":
-                    correct_answer = random.choice(["true", "false"])
+                elif question_type == "TRUE_FALSE":
+                    correct_answer = random.choice(["True", "False"])
                 else:
                     correct_answer = ""
 
@@ -274,9 +299,11 @@ def generate_assessments(modules: List[Dict[str, object]]) -> List[Dict[str, obj
                         "explanation": f"Explanation for {question_type} question {order_index} in module {module_id}.",
                         "points": 10,
                         "order_index": order_index,
+                        "is_active": True,
                         "created_at": datetime.utcnow(),
                     }
                 )
+                assessment_id += 1
                 order_index += 1
 
     logging.info("Prepared %s assessments", len(assessments))
@@ -285,41 +312,58 @@ def generate_assessments(modules: List[Dict[str, object]]) -> List[Dict[str, obj
 
 def generate_users() -> Tuple[List[Dict[str, object]], Dict[str, str]]:
     now = datetime.utcnow()
+    
+    # Generate a real bcrypt hash for the default password
+    # This matches the backend's password hashing (bcrypt)
+    hashed_password = pwd_context.hash(DEFAULT_PASSWORD)
+    
+    # User IDs must be integers (matching User model: id = Column(Integer, ...))
+    # Start from 1 for consistency
+    user_id = 1
+    
     users = [
         {
-            "id": new_uuid(),
+            "id": user_id,
             "email": "admin@example.com",
             "username": "admin_lead",
-            "password_hash": "hashed-password",
+            "hashed_password": hashed_password,
             "full_name": "Avery Admin",
-            "role": "admin",
+            "role": "ADMIN",
             "is_active": True,
-            "created_at": now,
-            "updated_at": now,
-        },
-        {
-            "id": new_uuid(),
-            "email": "instructor.alex@example.com",
-            "username": "alex_instructor",
-            "password_hash": "hashed-password",
-            "full_name": "Alex Instructor",
-            "role": "instructor",
-            "is_active": True,
-            "created_at": now,
-            "updated_at": now,
-        },
-        {
-            "id": new_uuid(),
-            "email": "instructor.jordan@example.com",
-            "username": "jordan_instructor",
-            "password_hash": "hashed-password",
-            "full_name": "Jordan Instructor",
-            "role": "instructor",
-            "is_active": True,
+            "is_verified": True,
             "created_at": now,
             "updated_at": now,
         },
     ]
+    user_id += 1
+    
+    users.append({
+        "id": user_id,
+            "email": "instructor.alex@example.com",
+            "username": "alex_instructor",
+        "hashed_password": hashed_password,
+            "full_name": "Alex Instructor",
+        "role": "INSTRUCTOR",
+            "is_active": True,
+        "is_verified": True,
+            "created_at": now,
+            "updated_at": now,
+    })
+    user_id += 1
+    
+    users.append({
+        "id": user_id,
+            "email": "instructor.jordan@example.com",
+            "username": "jordan_instructor",
+        "hashed_password": hashed_password,
+            "full_name": "Jordan Instructor",
+        "role": "INSTRUCTOR",
+            "is_active": True,
+        "is_verified": True,
+            "created_at": now,
+            "updated_at": now,
+    })
+    user_id += 1
 
     student_names = [
         ("casey.student@example.com", "Casey Learner"),
@@ -332,28 +376,37 @@ def generate_users() -> Tuple[List[Dict[str, object]], Dict[str, str]]:
     for index, (email, full_name) in enumerate(student_names, start=1):
         users.append(
             {
-                "id": new_uuid(),
+                "id": user_id,
                 "email": email,
                 "username": f"student_{index}",
-                "password_hash": "hashed-password",
+                "hashed_password": hashed_password,
                 "full_name": full_name,
-                "role": "student",
+                "role": "STUDENT",
                 "is_active": True,
+                "is_verified": True,
                 "created_at": now,
                 "updated_at": now,
             }
         )
+        user_id += 1
 
     user_lookup = {user["username"]: user["id"] for user in users}
     logging.info("Prepared %s users", len(users))
+    logging.info("Default password for all seeded users: %s", DEFAULT_PASSWORD)
     return users, user_lookup
 
 
 def generate_cohorts(user_lookup: Dict[str, str]) -> Tuple[List[Dict[str, object]], List[Dict[str, object]], List[Dict[str, object]], List[Dict[str, object]]]:
     now = datetime.utcnow()
+    # All IDs must be integers - start counters
+    cohort_id = 1
+    member_id = 1
+    deadline_id = 1
+    announcement_id = 1
+    
     cohorts = [
         {
-            "id": new_uuid(),
+            "id": cohort_id,
             "name": "Spring 2025 Cohort",
             "description": "Flagship cohort for the spring term.",
             "start_date": datetime(2025, 3, 10),
@@ -364,7 +417,7 @@ def generate_cohorts(user_lookup: Dict[str, str]) -> Tuple[List[Dict[str, object
             "updated_at": now,
         },
         {
-            "id": new_uuid(),
+            "id": cohort_id + 1,
             "name": "Summer 2025 Cohort",
             "description": "Accelerated cohort focused on advanced topics.",
             "start_date": datetime(2025, 7, 8),
@@ -375,41 +428,44 @@ def generate_cohorts(user_lookup: Dict[str, str]) -> Tuple[List[Dict[str, object
             "updated_at": now,
         },
     ]
+    cohort_id += 2  # Increment for both cohorts
 
     cohort_members: List[Dict[str, object]] = []
     cohort_deadlines: List[Dict[str, object]] = []
     announcements: List[Dict[str, object]] = []
 
     for cohort in cohorts:
-        cohort_id = cohort["id"]
+        current_cohort_id = cohort["id"]
         instructor = cohort["created_by"]
         cohort_members.append(
             {
-                "id": new_uuid(),
-                "cohort_id": cohort_id,
+                "id": member_id,
+                "cohort_id": current_cohort_id,
                 "user_id": instructor,
-                "role": "instructor",
+                "role": "INSTRUCTOR",
                 "joined_at": now,
             }
         )
+        member_id += 1
 
     students = [username for username in user_lookup if username.startswith("student_")]
     for idx, student_username in enumerate(students):
-        cohort_id = cohorts[idx % len(cohorts)]["id"]
+        current_cohort_id = cohorts[idx % len(cohorts)]["id"]
         cohort_members.append(
             {
-                "id": new_uuid(),
-                "cohort_id": cohort_id,
+                "id": member_id,
+                "cohort_id": current_cohort_id,
                 "user_id": user_lookup[student_username],
-                "role": "student",
+                "role": "STUDENT",
                 "joined_at": now - timedelta(days=random.randint(1, 14)),
             }
         )
+        member_id += 1
 
     for cohort in cohorts:
         cohort_deadlines.append(
             {
-                "id": new_uuid(),
+                "id": deadline_id,
                 "cohort_id": cohort["id"],
                 "module_id": 3,
                 "deadline_date": cohort["start_date"] + timedelta(days=30),
@@ -419,9 +475,10 @@ def generate_cohorts(user_lookup: Dict[str, str]) -> Tuple[List[Dict[str, object
                 "created_at": now,
             }
         )
+        deadline_id += 1
         cohort_deadlines.append(
             {
-                "id": new_uuid(),
+                "id": deadline_id,
                 "cohort_id": cohort["id"],
                 "module_id": 8,
                 "deadline_date": cohort["start_date"] + timedelta(days=60),
@@ -431,10 +488,11 @@ def generate_cohorts(user_lookup: Dict[str, str]) -> Tuple[List[Dict[str, object
                 "created_at": now,
             }
         )
+        deadline_id += 1
 
         announcements.append(
             {
-                "id": new_uuid(),
+                "id": announcement_id,
                 "cohort_id": cohort["id"],
                 "author_id": cohort["created_by"],
                 "title": "Welcome to the cohort!",
@@ -445,10 +503,11 @@ def generate_cohorts(user_lookup: Dict[str, str]) -> Tuple[List[Dict[str, object
                 "updated_at": now,
             }
         )
+        announcement_id += 1
 
     announcements.append(
         {
-            "id": new_uuid(),
+            "id": announcement_id,
             "cohort_id": None,
             "author_id": user_lookup["admin_lead"],
             "title": "Platform Update",
@@ -470,6 +529,11 @@ def generate_progress_and_attempts(user_lookup: Dict[str, str], modules: List[Di
     notifications: List[Dict[str, object]] = []
     chat_messages: List[Dict[str, object]] = []
     now = datetime.utcnow()
+    # All IDs must be integers - start counters
+    progress_id = 1
+    attempt_id = 1
+    notification_id = 1
+    chat_message_id = 1
 
     student_ids = [user_lookup[f"student_{idx}"] for idx in range(1, 6)]
 
@@ -482,44 +546,43 @@ def generate_progress_and_attempts(user_lookup: Dict[str, str], modules: List[Di
         for module_id in completed_modules:
             progress_rows.append(
                 {
-                    "id": new_uuid(),
+                    "id": progress_id,
                     "user_id": student_id,
                     "module_id": module_id,
-                    "status": "completed",
-                    "progress_percent": 100.0,
+                    "status": "COMPLETED",
+                    "completion_percentage": 100.0,
                     "started_at": now - timedelta(days=30),
                     "completed_at": now - timedelta(days=15),
-                    "last_accessed": now - timedelta(days=1),
-                    "time_spent_minutes": random.randint(120, 240),
+                    "last_accessed_at": now - timedelta(days=1),
                 }
             )
+            progress_id += 1
 
         in_progress_module = random.choice([m["id"] for m in modules if m["id"] > 3])
         progress_rows.append(
             {
-                "id": new_uuid(),
+                "id": progress_id,
                 "user_id": student_id,
                 "module_id": in_progress_module,
-                "status": "in-progress",
-                "progress_percent": round(random.uniform(20, 70), 2),
+                    "status": "IN_PROGRESS",
+                    "completion_percentage": round(random.uniform(20, 70), 2),
                 "started_at": now - timedelta(days=7),
                 "completed_at": None,
-                "last_accessed": now - timedelta(hours=random.randint(5, 48)),
-                "time_spent_minutes": random.randint(45, 180),
+                    "last_accessed_at": now - timedelta(hours=random.randint(5, 48)),
             }
         )
 
         for module_id in completed_modules[:2]:
             module_assessments = assessments_by_module.get(module_id, [])[:2]
             for assessment in module_assessments:
-                is_manual = assessment["question_type"] in ("short-answer", "coding-task")
-                review_status = "pending" if is_manual else "graded"
+                is_manual = assessment["question_type"] in ("SHORT_ANSWER", "CODING_TASK")
+                review_status = "PENDING" if is_manual else "GRADED"
                 graded_by = user_lookup["alex_instructor"] if not is_manual else None
                 graded_at = now - timedelta(days=1) if not is_manual else None
-                attempt_id = new_uuid()
+                current_attempt_id = attempt_id
                 attempts_rows.append(
                     {
-                        "id": attempt_id,
+                        "id": current_attempt_id,
                         "user_id": student_id,
                         "assessment_id": assessment["id"],
                         "user_answer": "Sample response",
@@ -534,25 +597,27 @@ def generate_progress_and_attempts(user_lookup: Dict[str, str], modules: List[Di
                         "time_spent_seconds": random.randint(30, 300),
                     }
                 )
+                attempt_id += 1
 
                 if review_status == "pending":
                     notifications.append(
                         {
-                            "id": new_uuid(),
+                            "id": notification_id,
                             "user_id": user_lookup["alex_instructor"],
                             "type": "assessment_graded",
                             "title": "Grading Needed",
-                            "message": f"Manual grading required for attempt {attempt_id}.",
-                            "link": f"/grading/{attempt_id}",
+                            "message": f"Manual grading required for attempt {current_attempt_id}.",
+                            "link": f"/grading/{current_attempt_id}",
                             "is_read": False,
                             "created_at": now,
                             "read_at": None,
                         }
                     )
+                    notification_id += 1
 
         notifications.append(
             {
-                "id": new_uuid(),
+                "id": notification_id,
                 "user_id": student_id,
                 "type": "module_unlocked",
                 "title": "Next module unlocked",
@@ -563,10 +628,11 @@ def generate_progress_and_attempts(user_lookup: Dict[str, str], modules: List[Di
                 "read_at": None,
             }
         )
+        notification_id += 1
 
         chat_messages.append(
             {
-                "id": new_uuid(),
+                "id": chat_message_id,
                 "user_id": student_id,
                 "message": "Can you clarify smart contracts again?",
                 "response": "Smart contracts are self-executing code on the blockchain.",
@@ -576,6 +642,8 @@ def generate_progress_and_attempts(user_lookup: Dict[str, str], modules: List[Di
                 "created_at": now - timedelta(hours=random.randint(1, 24)),
             }
         )
+        progress_id += 1
+        chat_message_id += 1
 
     logging.info("Prepared %s progress records, %s quiz attempts, %s notifications, %s chat messages", len(progress_rows), len(attempts_rows), len(notifications), len(chat_messages))
     return progress_rows, attempts_rows, notifications, chat_messages
@@ -585,6 +653,7 @@ def generate_leaderboards(user_lookup: Dict[str, str], cohorts: List[Dict[str, o
     now = datetime.utcnow()
     leaderboard_rows: List[Dict[str, object]] = []
     categories = ["progress", "scores", "engagement"]
+    leaderboard_id = 1
 
     for cohort in cohorts:
         cohort_id = cohort["id"]
@@ -595,7 +664,7 @@ def generate_leaderboards(user_lookup: Dict[str, str], cohorts: List[Dict[str, o
             for category in categories:
                 leaderboard_rows.append(
                     {
-                        "id": new_uuid(),
+                        "id": leaderboard_id,
                         "cohort_id": cohort_id,
                         "user_id": student_id,
                         "category": category,
@@ -604,6 +673,7 @@ def generate_leaderboards(user_lookup: Dict[str, str], cohorts: List[Dict[str, o
                         "updated_at": now,
                     }
                 )
+                leaderboard_id += 1
 
     logging.info("Prepared %s leaderboard rows", len(leaderboard_rows))
     return leaderboard_rows
@@ -611,9 +681,10 @@ def generate_leaderboards(user_lookup: Dict[str, str], cohorts: List[Dict[str, o
 
 def generate_achievements() -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
     now = datetime.utcnow()
+    achievement_id = 1
     achievements = [
         {
-            "id": new_uuid(),
+            "id": achievement_id,
             "name": "Module Master",
             "description": "Complete any module with 100% score.",
             "icon": "trophy",
@@ -623,8 +694,10 @@ def generate_achievements() -> Tuple[List[Dict[str, object]], List[Dict[str, obj
             "points": 50,
             "is_active": True,
         },
-        {
-            "id": new_uuid(),
+    ]
+    achievement_id += 1
+    achievements.append({
+        "id": achievement_id,
             "name": "Forum Helper",
             "description": "Help 10 peers in the forum.",
             "icon": "chat",
@@ -633,8 +706,7 @@ def generate_achievements() -> Tuple[List[Dict[str, object]], List[Dict[str, obj
             "progress_tracking": json.dumps({"forum_help": {"current": 0, "target": 10}}),
             "points": 25,
             "is_active": True,
-        },
-    ]
+        })
 
     user_achievements = []
     logging.info("Prepared %s achievements", len(achievements))
@@ -644,6 +716,7 @@ def generate_achievements() -> Tuple[List[Dict[str, object]], List[Dict[str, obj
 def generate_learning_resources(modules: List[Dict[str, object]]) -> List[Dict[str, object]]:
     now = datetime.utcnow()
     resources: List[Dict[str, object]] = []
+    resource_id = 1
     samples = [
         ("video", "beginner"),
         ("article", "intermediate"),
@@ -653,7 +726,7 @@ def generate_learning_resources(modules: List[Dict[str, object]]) -> List[Dict[s
         for resource_type, difficulty in samples:
             resources.append(
                 {
-                    "id": new_uuid(),
+                    "id": resource_id,
                     "module_id": module["id"],
                     "title": f"{module['title']} {resource_type.title()} Resource",
                     "url": f"https://example.com/{module['id']}/{resource_type}",
@@ -664,6 +737,7 @@ def generate_learning_resources(modules: List[Dict[str, object]]) -> List[Dict[s
                     "created_at": now,
                 }
             )
+            resource_id += 1
     logging.info("Prepared %s learning resources", len(resources))
     return resources
 

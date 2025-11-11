@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 import { motion } from 'framer-motion';
 import { Button, Box, Typography, Card, CardContent, Container } from '@mui/material';
 import { School, Assessment, TrendingUp, ArrowForward } from '@mui/icons-material';
@@ -9,6 +10,8 @@ import { School, Assessment, TrendingUp, ArrowForward } from '@mui/icons-materia
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { mode } = useThemeMode();
+  const backgroundColor = mode === 'light' ? '#f8f9fa' : '#0a0e27';
 
   const learningTracks = [
     {
@@ -38,7 +41,7 @@ export const HomePage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27', py: 4 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor, py: 4 }}>
       <Container maxWidth="lg">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -47,12 +50,11 @@ export const HomePage: React.FC = () => {
         >
           {/* Hero Section */}
           <Card
+            className="glass-surface"
             sx={{
-              backgroundColor: '#ffffff',
               borderRadius: 3,
               p: 4,
               mb: 4,
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
             }}
           >
             <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -62,7 +64,7 @@ export const HomePage: React.FC = () => {
                 sx={{
                   fontWeight: 'bold',
                   mb: 2,
-                  color: '#1a1a1a',
+                  color: 'text.primary',
                 }}
               >
                 Master Blockchain & Cryptocurrency
@@ -70,7 +72,7 @@ export const HomePage: React.FC = () => {
               <Typography
                 variant="body1"
                 sx={{
-                  color: '#666666',
+                  color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.9)',
                   mb: 4,
                   maxWidth: '600px',
                   mx: 'auto',
@@ -82,7 +84,7 @@ export const HomePage: React.FC = () => {
               <Typography
                 variant="body2"
                 sx={{
-                  color: '#999999',
+                  color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.7)',
                   mb: 4,
                 }}
               >
@@ -95,13 +97,13 @@ export const HomePage: React.FC = () => {
                   endIcon={<ArrowForward />}
                   onClick={() => navigate('/modules')}
                   sx={{
-                    backgroundColor: '#e0e0e0',
-                    color: '#1a1a1a',
+                    backgroundColor: '#1976d2',
+                    color: 'text.primary',
                     fontWeight: 'bold',
                     px: 4,
                     py: 1.5,
                     '&:hover': {
-                      backgroundColor: '#d0d0d0',
+                      backgroundColor: '#1565c0',
                     },
                   }}
                 >
@@ -113,14 +115,14 @@ export const HomePage: React.FC = () => {
                   endIcon={<Assessment />}
                   onClick={() => navigate('/assessments')}
                   sx={{
-                    borderColor: '#999999',
-                    color: '#1a1a1a',
+                  borderColor: mode === 'light' ? 'divider' : 'rgba(255, 255, 255, 0.5)',
+                    color: 'text.primary',
                     fontWeight: 'bold',
                     px: 4,
                     py: 1.5,
                     '&:hover': {
-                      borderColor: '#666666',
-                      backgroundColor: '#f5f5f5',
+                    borderColor: mode === 'light' ? 'text.primary' : '#ffffff',
+                    backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255, 255, 255, 0.1)',
                     },
                   }}
                 >
@@ -147,19 +149,18 @@ export const HomePage: React.FC = () => {
             ].map((stat, index) => (
               <Card
                 key={index}
+                className="glass-surface"
                 sx={{
-                  backgroundColor: '#ffffff',
                   borderRadius: 2,
                   p: 2,
                   textAlign: 'center',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 <Typography
                   variant="h4"
                   sx={{
                     fontWeight: 'bold',
-                    color: '#1976d2',
+                    color: 'text.primary',
                     mb: 0.5,
                   }}
                 >
@@ -168,7 +169,7 @@ export const HomePage: React.FC = () => {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: '#666666',
+                    color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)',
                     fontSize: '0.875rem',
                   }}
                 >
@@ -206,12 +207,11 @@ export const HomePage: React.FC = () => {
             ].map((feature, index) => (
               <Card
                 key={index}
+                className="glass-surface"
                 sx={{
-                  backgroundColor: '#ffffff',
                   borderRadius: 3,
                   p: 3,
                   textAlign: 'center',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 <Box sx={{ mb: 2 }}>{feature.icon}</Box>
@@ -219,7 +219,7 @@ export const HomePage: React.FC = () => {
                   variant="h6"
                   sx={{
                     fontWeight: 'bold',
-                    color: '#1a1a1a',
+                    color: 'text.primary',
                     mb: 1,
                   }}
                 >
@@ -228,7 +228,7 @@ export const HomePage: React.FC = () => {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: '#666666',
+                    color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)',
                   }}
                 >
                   {feature.description}
@@ -243,7 +243,7 @@ export const HomePage: React.FC = () => {
               variant="h5"
               sx={{
                 fontWeight: 'bold',
-                color: '#ffffff',
+                color: 'text.primary',
                 mb: 3,
                 textAlign: 'center',
               }}
@@ -260,11 +260,10 @@ export const HomePage: React.FC = () => {
               {learningTracks.map((track, index) => (
                 <Card
                   key={index}
+                  className="glass-surface"
                   sx={{
-                    backgroundColor: '#ffffff',
                     borderRadius: 3,
                     p: 3,
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
@@ -273,7 +272,7 @@ export const HomePage: React.FC = () => {
                         variant="h6"
                         sx={{
                           fontWeight: 'bold',
-                          color: '#1a1a1a',
+                          color: 'text.primary',
                           mb: 1,
                         }}
                       >
@@ -282,7 +281,7 @@ export const HomePage: React.FC = () => {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: '#666666',
+                          color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)',
                           mb: 1,
                         }}
                       >
@@ -291,7 +290,7 @@ export const HomePage: React.FC = () => {
                       <Typography
                         variant="caption"
                         sx={{
-                          color: '#999999',
+                          color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.6)',
                         }}
                       >
                         {track.goal}
@@ -302,7 +301,7 @@ export const HomePage: React.FC = () => {
                       size="small"
                       sx={{
                         backgroundColor: '#1976d2',
-                        color: '#ffffff',
+                        color: 'text.primary',
                         minWidth: 'auto',
                         px: 2,
                         py: 0.5,

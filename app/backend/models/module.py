@@ -8,10 +8,10 @@ import enum
 
 class Track(str, enum.Enum):
     """Curriculum track enumeration"""
-    USER = "user"
-    ANALYST = "analyst"
-    DEVELOPER = "developer"
-    ARCHITECT = "architect"
+    USER = "USER"
+    ANALYST = "ANALYST"
+    DEVELOPER = "DEVELOPER"
+    ARCHITECT = "ARCHITECT"
 
 
 class Module(Base):

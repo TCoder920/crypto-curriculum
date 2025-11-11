@@ -5,6 +5,8 @@ import { Box, Button, Typography, CircularProgress, Alert, Paper, Container } fr
 import { ArrowBack, ArrowForward, Send } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
+import { useThemeMode } from '../contexts/ThemeContext';
 import { assessmentService } from '../services/assessmentService';
 import { QuestionCard } from '../components/assessment/QuestionCard';
 import { MultipleChoice } from '../components/assessment/MultipleChoice';
@@ -18,6 +20,8 @@ export const AssessmentPage: React.FC = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { mode } = useThemeMode();
+  const backgroundColor = mode === 'light' ? '#f8f9fa' : '#0a0e27';
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -104,17 +108,36 @@ export const AssessmentPage: React.FC = () => {
 
   if (isLoadingAssessments) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor }}>
         <CircularProgress />
       </Box>
     );
   }
 
   if (assessmentError) {
+    const isNotFound =
+      isAxiosError(assessmentError) && assessmentError.response?.status === 404;
+
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
-        <Alert severity="error">
-          Failed to load assessments. Please try again.
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 4,
+          backgroundColor,
+        }}
+      >
+        <Alert severity={isNotFound ? 'info' : 'error'}>
+          {isNotFound ? (
+            <>
+              No assessments are available for this module yet. If you recently restarted
+              the backend, wait a moment or refresh once more to ensure routes are loaded.
+            </>
+          ) : (
+            'Failed to load assessments. Please try again.'
+          )}
         </Alert>
       </Box>
     );
@@ -122,7 +145,7 @@ export const AssessmentPage: React.FC = () => {
 
   if (assessments.length === 0) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor }}>
         <Alert severity="info">No assessments available for this module.</Alert>
       </Box>
     );
@@ -134,7 +157,7 @@ export const AssessmentPage: React.FC = () => {
 
   if (!currentAssessment) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor }}>
         <Alert severity="info">No assessments available for this module.</Alert>
       </Box>
     );
@@ -143,37 +166,36 @@ export const AssessmentPage: React.FC = () => {
   const isAnswerSubmitted = currentResult !== undefined;
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27', py: 4 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor, py: 4 }}>
       <Container maxWidth="md">
         {/* Header */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ffffff', mb: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}>
             {assessmentData?.module_title}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+          <Typography variant="body2" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)' }}>
             {assessmentData?.total_points} points • Estimated time: {assessmentData?.estimated_time_minutes} minutes
           </Typography>
         </Box>
 
         {/* Progress Bar */}
         <Paper
+          className="glass-surface"
           sx={{
-            backgroundColor: '#ffffff',
             borderRadius: 2,
             p: 3,
             mb: 4,
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="body2" sx={{ color: '#666666' }}>
+            <Typography variant="body2" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)' }}>
               Progress: {currentQuestionIndex + 1} / {assessments.length}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#666666' }}>
+            <Typography variant="body2" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)' }}>
               {Math.round(((currentQuestionIndex + 1) / assessments.length) * 100)}%
             </Typography>
           </Box>
-          <Box sx={{ width: '100%', height: 8, backgroundColor: '#e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
+          <Box sx={{ width: '100%', height: 8, backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255, 255, 255, 0.2)', borderRadius: 1, overflow: 'hidden' }}>
             <motion.div
               style={{
                 height: '100%',
@@ -231,11 +253,11 @@ export const AssessmentPage: React.FC = () => {
             onClick={() => navigate(`/modules/${moduleId}`)}
             variant="outlined"
             sx={{
-              borderColor: '#999999',
-              color: '#ffffff',
+              borderColor: mode === 'light' ? 'divider' : '#999999',
+              color: 'text.primary',
               '&:hover': {
-                borderColor: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: mode === 'light' ? 'text.primary' : '#ffffff',
+                backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255, 255, 255, 0.1)',
               },
             }}
           >

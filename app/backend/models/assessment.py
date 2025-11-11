@@ -8,10 +8,10 @@ import enum
 
 class QuestionType(str, enum.Enum):
     """Question type enumeration"""
-    MULTIPLE_CHOICE = "multiple_choice"
-    TRUE_FALSE = "true_false"
-    SHORT_ANSWER = "short_answer"
-    CODING_TASK = "coding_task"
+    MULTIPLE_CHOICE = "MULTIPLE_CHOICE"
+    TRUE_FALSE = "TRUE_FALSE"
+    SHORT_ANSWER = "SHORT_ANSWER"
+    CODING_TASK = "CODING_TASK"
 
 
 class Assessment(Base):

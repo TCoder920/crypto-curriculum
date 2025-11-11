@@ -5,11 +5,14 @@ import { Box, Button, Typography, Paper, CircularProgress, Alert, Card, CardCont
 import { School } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
+import { useThemeMode } from '../contexts/ThemeContext';
 import { moduleService } from '../services/moduleService';
 import type { Module } from '../types/module';
 
 export const ModulesListPage: React.FC = () => {
   const navigate = useNavigate();
+  const { mode } = useThemeMode();
+  const backgroundColor = mode === 'light' ? '#f8f9fa' : '#0a0e27';
 
   // Fetch all modules
   const {
@@ -27,7 +30,7 @@ export const ModulesListPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor }}>
         <CircularProgress />
       </Box>
     );
@@ -35,7 +38,7 @@ export const ModulesListPage: React.FC = () => {
 
   if (error) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor }}>
         <Alert severity="error">
           Failed to load modules. Please try again.
         </Alert>
@@ -46,14 +49,14 @@ export const ModulesListPage: React.FC = () => {
   const modules = modulesData?.modules || [];
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27', py: 4 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor, py: 4 }}>
       <Container maxWidth="lg">
         {/* Header */}
         <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#ffffff', mb: 2 }}>
+          <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}>
             All Modules
           </Typography>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+          <Typography variant="body1" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)' }}>
             Explore {modules.length} comprehensive modules on blockchain and cryptocurrency
           </Typography>
         </Box>
@@ -71,28 +74,27 @@ export const ModulesListPage: React.FC = () => {
                 onClick={() => handleModuleClick(module.id)}
               >
                 <Card
+                  className="glass-surface"
                   sx={{
-                    backgroundColor: '#ffffff',
                     borderRadius: 3,
                     height: '100%',
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   <CardContent sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                       <Box>
-                        <Typography variant="caption" sx={{ color: '#666666', display: 'block', mb: 0.5 }}>
+                        <Typography variant="caption" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.7)', display: 'block', mb: 0.5 }}>
                           Module {module.order_index}
                         </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1a1a1a', mb: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 1 }}>
                           {module.title}
                         </Typography>
                         {module.description && (
-                          <Typography variant="body2" sx={{ color: '#666666', mb: 2 }}>
+                          <Typography variant="body2" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)', mb: 2 }}>
                             {module.description}
                           </Typography>
                         )}
-                        <Typography variant="caption" sx={{ color: '#999999', display: 'block' }}>
+                        <Typography variant="caption" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.6)', display: 'block' }}>
                           {module.track} • {module.duration_hours} hours
                         </Typography>
                       </Box>
@@ -106,11 +108,11 @@ export const ModulesListPage: React.FC = () => {
                         handleModuleClick(module.id);
                       }}
                       sx={{
-                        borderColor: '#999999',
-                        color: '#1a1a1a',
+                        borderColor: mode === 'light' ? 'divider' : 'rgba(255, 255, 255, 0.5)',
+                        color: 'text.primary',
                         '&:hover': {
-                          borderColor: '#666666',
-                          backgroundColor: '#f5f5f5',
+                          borderColor: mode === 'light' ? 'text.primary' : '#ffffff',
+                          backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255, 255, 255, 0.1)',
                         },
                       }}
                     >
@@ -125,8 +127,8 @@ export const ModulesListPage: React.FC = () => {
 
         {modules.length === 0 && (
           <Paper
+            className="glass-surface"
             sx={{
-              backgroundColor: '#ffffff',
               borderRadius: 3,
               p: 3,
               mt: 4,

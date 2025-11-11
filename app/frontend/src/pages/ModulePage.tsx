@@ -6,6 +6,7 @@ import { ArrowBack, ArrowForward, Assessment, CheckCircle } from '@mui/icons-mat
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
+import { useThemeMode } from '../contexts/ThemeContext';
 import { moduleService } from '../services/moduleService';
 import { assessmentService } from '../services/assessmentService';
 import type { Lesson } from '../types/module';
@@ -13,6 +14,8 @@ import type { Lesson } from '../types/module';
 export const ModulePage: React.FC = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
+  const { mode } = useThemeMode();
+  const backgroundColor = mode === 'light' ? '#f8f9fa' : '#0a0e27';
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
 
   // Fetch module details
@@ -65,7 +68,7 @@ export const ModulePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor }}>
         <CircularProgress />
       </Box>
     );
@@ -73,7 +76,7 @@ export const ModulePage: React.FC = () => {
 
   if (error) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor }}>
         <Alert severity="error">
           Failed to load module. Please try again.
         </Alert>
@@ -83,26 +86,26 @@ export const ModulePage: React.FC = () => {
 
   if (!moduleData) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor }}>
         <Alert severity="info">Module not found.</Alert>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27', py: 4 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor, py: 4 }}>
       <Container maxWidth="lg">
         {/* Header */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ffffff', mb: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}>
             {moduleData.title}
           </Typography>
           {moduleData.description && (
-            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
+            <Typography variant="body1" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
               {moduleData.description}
             </Typography>
           )}
-          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+          <Typography variant="body2" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.6)' }}>
             Track: {moduleData.track} • Duration: {moduleData.duration_hours} hours
           </Typography>
         </Box>
@@ -116,27 +119,26 @@ export const ModulePage: React.FC = () => {
             transition={{ duration: 0.3 }}
           >
             <Paper
+              className="glass-surface"
               sx={{
-                backgroundColor: '#ffffff',
                 borderRadius: 3,
                 p: 4,
                 mb: 4,
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
               }}
             >
               <Box sx={{ mb: 3 }}>
-                <Typography variant="caption" sx={{ color: '#666666', display: 'block', mb: 2 }}>
+                <Typography variant="caption" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.7)', display: 'block', mb: 2 }}>
                   Lesson {currentLessonIndex + 1} of {lessons.length}
                   {currentLesson.estimated_minutes && ` • ${currentLesson.estimated_minutes} minutes`}
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 'semibold', color: '#1a1a1a', mb: 3 }}>
+                <Typography variant="h5" sx={{ fontWeight: 'semibold', color: 'text.primary', mb: 3 }}>
                   {currentLesson.title}
                 </Typography>
               </Box>
 
-              <Divider sx={{ my: 3 }} />
+              <Divider sx={{ my: 3, borderColor: mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255, 255, 255, 0.2)' }} />
 
-              <Box sx={{ color: '#1a1a1a' }}>
+              <Box sx={{ color: 'text.primary' }}>
                 <ReactMarkdown>{currentLesson.content}</ReactMarkdown>
               </Box>
             </Paper>
@@ -149,12 +151,11 @@ export const ModulePage: React.FC = () => {
                 disabled={currentLessonIndex === 0}
                 variant="outlined"
                 sx={{
-                  borderColor: '#999999',
-                  color: '#1a1a1a',
-                  backgroundColor: '#ffffff',
+                  borderColor: mode === 'light' ? 'divider' : 'rgba(255, 255, 255, 0.5)',
+                  color: 'text.primary',
                   '&:hover': {
-                    borderColor: '#666666',
-                    backgroundColor: '#f5f5f5',
+                    borderColor: mode === 'light' ? 'text.primary' : '#ffffff',
+                    backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255, 255, 255, 0.1)',
                   },
                 }}
               >
@@ -182,8 +183,8 @@ export const ModulePage: React.FC = () => {
                   disabled
                   variant="outlined"
                   sx={{
-                    borderColor: '#999999',
-                    color: '#999999',
+                  borderColor: mode === 'light' ? 'divider' : 'rgba(255, 255, 255, 0.3)',
+                  color: mode === 'light' ? 'text.disabled' : 'rgba(255, 255, 255, 0.5)',
                   }}
                 >
                   Last Lesson
@@ -193,8 +194,8 @@ export const ModulePage: React.FC = () => {
           </motion.div>
         ) : (
           <Paper
+            className="glass-surface"
             sx={{
-              backgroundColor: '#ffffff',
               borderRadius: 3,
               p: 3,
               mb: 4,
@@ -212,21 +213,20 @@ export const ModulePage: React.FC = () => {
             transition={{ duration: 0.3, delay: 0.2 }}
           >
             <Paper
+              className="glass-surface"
               sx={{
-                backgroundColor: '#ffffff',
                 borderRadius: 3,
                 p: 4,
                 textAlign: 'center',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
               }}
             >
               {hasPassedAssessment ? (
                 <>
                   <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
-                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a1a1a', mb: 2 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}>
                     Assessment Complete!
                   </Typography>
-                  <Typography variant="body1" sx={{ color: '#666666', mb: 4 }}>
+                  <Typography variant="body1" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)', mb: 4 }}>
                     You've successfully completed this module with a score of {assessmentResults?.score_percent.toFixed(1)}%.
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
@@ -234,11 +234,11 @@ export const ModulePage: React.FC = () => {
                       variant="outlined"
                       onClick={() => navigate('/modules')}
                       sx={{
-                        borderColor: '#999999',
-                        color: '#1a1a1a',
+                        borderColor: mode === 'light' ? 'divider' : 'rgba(255, 255, 255, 0.5)',
+                        color: 'text.primary',
                         '&:hover': {
-                          borderColor: '#666666',
-                          backgroundColor: '#f5f5f5',
+                          borderColor: mode === 'light' ? 'text.primary' : '#ffffff',
+                          backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255, 255, 255, 0.1)',
                         },
                       }}
                     >
@@ -262,10 +262,10 @@ export const ModulePage: React.FC = () => {
               ) : (
                 <>
                   <Assessment sx={{ fontSize: 64, color: '#1976d2', mb: 2 }} />
-                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a1a1a', mb: 2 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}>
                     Module Assessment
                   </Typography>
-                  <Typography variant="body1" sx={{ color: '#666666', mb: 4 }}>
+                  <Typography variant="body1" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255, 255, 255, 0.8)', mb: 4 }}>
                     Test your knowledge with 10 comprehensive questions. You can take the assessment at any time.
                   </Typography>
                   <Button

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { ThemeProvider, createTheme, CssBaseline, Box } from '@mui/material'
+import { Box } from '@mui/material'
+import { ThemeContextProvider, useThemeMode } from './contexts/ThemeContext'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { Navigation } from './components/layout/Navigation'
 import { LoginPage } from './pages/LoginPage'
@@ -9,29 +10,15 @@ import { ModulesListPage } from './pages/ModulesListPage'
 import { AssessmentsListPage } from './pages/AssessmentsListPage'
 import { ModulePage } from './pages/ModulePage'
 import { AssessmentPage } from './pages/AssessmentPage'
+import { ProgressPage } from './pages/ProgressPage'
+import { ProfileSettingsPage } from './pages/ProfileSettingsPage'
 import './App.css'
 
-// Create MUI theme with dark mode
-const theme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-    background: {
-      default: '#0a0e27',
-      paper: '#1a1f3a',
-    },
-  },
-})
+function AppContent() {
+  const { mode } = useThemeMode();
+  const backgroundColor = mode === 'light' ? '#f8f9fa' : '#0a0e27';
 
-function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -39,12 +26,15 @@ function App() {
           path="/*"
           element={
             <ProtectedRoute>
-              <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27' }}>
+            <Box sx={{ minHeight: '100vh', backgroundColor }}>
                 <Navigation />
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/modules" element={<ModulesListPage />} />
                   <Route path="/assessments" element={<AssessmentsListPage />} />
+                <Route path="/progress" element={<ProgressPage />} />
+                <Route path="/profile" element={<ProfileSettingsPage />} />
+                <Route path="/settings" element={<ProfileSettingsPage />} />
                   <Route path="/modules/:moduleId" element={<ModulePage />} />
                   <Route path="/modules/:moduleId/assessments" element={<AssessmentPage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
@@ -54,7 +44,14 @@ function App() {
           }
         />
       </Routes>
-    </ThemeProvider>
+  )
+}
+
+function App() {
+  return (
+    <ThemeContextProvider>
+      <AppContent />
+    </ThemeContextProvider>
   )
 }
 
