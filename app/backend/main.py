@@ -82,10 +82,11 @@ async def health_check():
 
 
 # Import and include routers
-from app.backend.api.v1.endpoints import auth, assessment
+from app.backend.api.v1.endpoints import auth, assessment, module
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(assessment.router, prefix="/api/v1", tags=["assessments"])
+app.include_router(module.router, prefix="/api/v1", tags=["modules"])
 
 
 if __name__ == "__main__":

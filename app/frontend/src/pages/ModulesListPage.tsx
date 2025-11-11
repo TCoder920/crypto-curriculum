@@ -1,95 +1,141 @@
-import React from 'react'
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  Grid,
-  Typography,
-} from '@mui/material'
-import { useNavigate } from 'react-router-dom'
-import { curriculumModules, learningTracks } from '../data/curriculum'
-
-const trackLookup = learningTracks.reduce<Record<string, { title: string; color: string }>>(
-  (acc, track) => {
-    const colorMap: Record<string, string> = {
-      user: '#3b82f6',
-      analyst: '#6366f1',
-      developer: '#14b8a6',
-      architect: '#f97316',
-    }
-    acc[track.id] = { title: track.title, color: colorMap[track.id] || '#1976d2' }
-    return acc
-  },
-  {},
-)
+/** Modules list page - displays all available modules */
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Button, Typography, Paper, CircularProgress, Alert, Card, CardContent, Grid, Container } from '@mui/material';
+import { School } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { moduleService } from '../services/moduleService';
+import type { Module } from '../types/module';
 
 export const ModulesListPage: React.FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  // Fetch all modules
+  const {
+    data: modulesData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['modules'],
+    queryFn: () => moduleService.getModules(),
+  });
+
+  const handleModuleClick = (moduleId: number) => {
+    navigate(`/modules/${moduleId}`);
+  };
+
+  if (isLoading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0e27' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+        <Alert severity="error">
+          Failed to load modules. Please try again.
+        </Alert>
+      </Box>
+    );
+  }
+
+  const modules = modulesData?.modules || [];
 
   return (
-    <Box className="min-h-screen bg-slate-50 py-6">
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27', py: 4 }}>
       <Container maxWidth="lg">
-        <Box className="mb-8 text-center">
-          <Typography variant="h3" className="font-bold mb-2">
+        {/* Header */}
+        <Box sx={{ mb: 4, textAlign: 'center' }}>
+          <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#ffffff', mb: 2 }}>
             All Modules
           </Typography>
-          <Typography color="text.secondary">
-            Progress through the curriculum track-by-track. Select a module to review its lessons or
-            jump directly into its assessment.
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+            Explore {modules.length} comprehensive modules on blockchain and cryptocurrency
           </Typography>
         </Box>
 
+        {/* Modules Grid */}
         <Grid container spacing={3}>
-          {curriculumModules.map((module) => {
-            const track = trackLookup[module.trackId]
-            return (
-              <Grid item xs={12} md={6} key={module.id}>
-                <Card className="h-full rounded-3xl shadow-md">
-                  <CardContent className="space-y-3">
-                    <Box className="flex justify-between items-center">
-                      <Chip
-                        label={track?.title || 'Curriculum Module'}
-                        sx={{ backgroundColor: track?.color, color: '#fff' }}
-                      />
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Module {module.id}
-                      </Typography>
-                    </Box>
-                    <Typography variant="h5" className="font-semibold">
-                      {module.title}
-                    </Typography>
-                    <Typography color="text.secondary">{module.summary}</Typography>
-                    <Box className="grid gap-2">
-                      {module.focus.map((item) => (
-                        <Typography variant="body2" key={item}>
-                          • {item}
+          {modules.map((module: Module, index: number) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={module.id}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleModuleClick(module.id)}
+              >
+                <Card
+                  sx={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: 3,
+                    height: '100%',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: '#666666', display: 'block', mb: 0.5 }}>
+                          Module {module.order_index}
                         </Typography>
-                      ))}
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1a1a1a', mb: 1 }}>
+                          {module.title}
+                        </Typography>
+                        {module.description && (
+                          <Typography variant="body2" sx={{ color: '#666666', mb: 2 }}>
+                            {module.description}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" sx={{ color: '#999999', display: 'block' }}>
+                          {module.track} • {module.duration_hours} hours
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box className="flex flex-wrap gap-2 pt-2">
-                      <Button
-                        variant="outlined"
-                        onClick={() => navigate(`/modules/${module.id}`)}
-                      >
-                        View Module
-                      </Button>
-                      <Button
-                        variant="contained"
-                        onClick={() => navigate(`/modules/${module.id}/assessments`)}
-                      >
-                        Take Assessment
-                      </Button>
-                    </Box>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<School />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleModuleClick(module.id);
+                      }}
+                      sx={{
+                        borderColor: '#999999',
+                        color: '#1a1a1a',
+                        '&:hover': {
+                          borderColor: '#666666',
+                          backgroundColor: '#f5f5f5',
+                        },
+                      }}
+                    >
+                      View Module
+                    </Button>
                   </CardContent>
                 </Card>
-              </Grid>
-            )
-          })}
+              </motion.div>
+            </Grid>
+          ))}
         </Grid>
+
+        {modules.length === 0 && (
+          <Paper
+            sx={{
+              backgroundColor: '#ffffff',
+              borderRadius: 3,
+              p: 3,
+              mt: 4,
+            }}
+          >
+            <Alert severity="info">No modules available.</Alert>
+          </Paper>
+        )}
       </Container>
     </Box>
-  )
-}
+  );
+};

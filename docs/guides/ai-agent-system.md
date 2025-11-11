@@ -32,7 +32,7 @@ We've created a multi-agent system where specialized AI agents handle different 
 ## Specialized Agents
 
 ### 1. Master Orchestrator Agent
-**File**: `/cursor/rules/masterOrchestrator.mdc`  
+**File**: `.cursor/rules/masterOrchestrator.mdc`  
 **Status**: `alwaysApply: true` (Always active)
 
 **Purpose**: Coordinates between specialized agents, maintains project consistency, and guides overall development strategy.
@@ -45,7 +45,7 @@ We've created a multi-agent system where specialized AI agents handle different 
 - Progress tracking
 
 ### 2. Frontend Component Agent
-**File**: `/cursor/rules/frontendComponentAgent.mdc`  
+**File**: `.cursor/rules/frontendComponentAgent.mdc`  
 **Status**: `alwaysApply: false` (Activate on demand)
 
 **Purpose**: Build React components with TypeScript, MUI v7, and Tailwind CSS.
@@ -67,7 +67,7 @@ We've created a multi-agent system where specialized AI agents handle different 
 - Axios
 
 ### 3. Backend API Agent
-**File**: `/cursor/rules/backendApiAgent.mdc`  
+**File**: `.cursor/rules/backendApiAgent.mdc`  
 **Status**: `alwaysApply: false` (Activate on demand)
 
 **Purpose**: Build FastAPI REST API with proper architecture and best practices.
@@ -89,7 +89,7 @@ We've created a multi-agent system where specialized AI agents handle different 
 - Pytest
 
 ### 4. Database Schema Agent
-**File**: `/cursor/rules/databaseSchemaAgent.mdc`  
+**File**: `.cursor/rules/databaseSchemaAgent.mdc`  
 **Status**: `alwaysApply: false` (Activate on demand)
 
 **Purpose**: Design database schemas, create models, and manage migrations.
@@ -109,7 +109,7 @@ We've created a multi-agent system where specialized AI agents handle different 
 - psycopg2-binary
 
 ### 5. Trading Bot Framework Agent
-**File**: `/cursor/rules/tradingBotAgent.mdc`  
+**File**: `.cursor/rules/tradingBotAgent.mdc`  
 **Status**: `alwaysApply: false` (Activate on demand)
 
 **Purpose**: Build custom LLM-agnostic AI trading bot framework for Module 17.
@@ -219,14 +219,17 @@ crypto curriculum/
 │       ├── schemas/
 │       ├── ai_agent/
 │       └── requirements.txt
-└── cursor/
-    └── rules/              # Agent configurations
+└── .cursor/
+    └── rules/              # Agent configurations (Cursor's standard location)
         ├── systemPrompt.mdc
         ├── masterOrchestrator.mdc
         ├── frontendComponentAgent.mdc
         ├── backendApiAgent.mdc
         ├── databaseSchemaAgent.mdc
         └── tradingBotAgent.mdc
+└── docs/
+    └── guides/
+        └── ai-agent-system.md  # This documentation file
 ```
 
 ## Development Phases
@@ -328,7 +331,7 @@ Large tasks should be broken into agent-specific subtasks:
 ### Agent Not Following Guidelines?
 Make sure to explicitly reference the agent:
 ```
-"Use Frontend Component Agent (see /cursor/rules/frontendComponentAgent.mdc) to..."
+"Use Frontend Component Agent (see .cursor/rules/frontendComponentAgent.mdc) to..."
 ```
 
 ### Need Multiple Agents?

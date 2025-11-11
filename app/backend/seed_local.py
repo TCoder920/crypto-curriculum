@@ -8,6 +8,7 @@ from app.backend.core.database import AsyncSessionLocal
 from app.backend.models.user import User, UserRole
 from app.backend.models.module import Module, Lesson, Track
 from app.backend.models.assessment import Assessment, QuestionType
+from app.backend.assessment_questions import get_all_assessments
 
 
 async def seed_users(session: AsyncSession) -> List[User]:
@@ -243,154 +244,33 @@ def get_module_1_assessments(module_id: int) -> List[Assessment]:
 
 
 async def seed_assessments(session: AsyncSession, modules: List[Module]) -> None:
-    """Seed assessments for all modules. Module 1 has full 10 questions, others have sample questions."""
+    """Seed assessments for all modules. All modules have 10 comprehensive questions."""
     assessments: List[Assessment] = []
+    all_assessments = get_all_assessments()
     
     for module in modules:
         if module.id == 1:
-            # Module 1: Full set of 10 questions
+            # Module 1: Full set of 10 questions (already defined)
             assessments.extend(get_module_1_assessments(module.id))
+        elif module.id in all_assessments:
+            # Modules 2-17: Use comprehensive questions from assessment_questions.py
+            # Create new Assessment objects with correct module_id
+            for assessment_template in all_assessments[module.id]:
+                assessment = Assessment(
+                    module_id=module.id,
+                    question_text=assessment_template.question_text,
+                    question_type=assessment_template.question_type,
+                    order_index=assessment_template.order_index,
+                    points=assessment_template.points,
+                    options=assessment_template.options,
+                    correct_answer=assessment_template.correct_answer,
+                    explanation=assessment_template.explanation,
+                    is_active=assessment_template.is_active,
+                )
+                assessments.append(assessment)
         else:
-            # Other modules: Sample questions (can be expanded later)
-            # 4 Multiple Choice
-            assessments.extend([
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"What is a key concept in {module.title}?",
-                    question_type=QuestionType.MULTIPLE_CHOICE,
-                    order_index=1,
-                    points=10,
-                    options={
-                        "A": "Option A",
-                        "B": "Option B",
-                        "C": "Option C",
-                        "D": "Option D"
-                    },
-                    correct_answer="A",
-                    explanation="Sample explanation for this question.",
-                    is_active=True,
-                ),
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"Which of the following best describes {module.title}?",
-                    question_type=QuestionType.MULTIPLE_CHOICE,
-                    order_index=2,
-                    points=10,
-                    options={
-                        "A": "Description A",
-                        "B": "Description B",
-                        "C": "Description C",
-                        "D": "Description D"
-                    },
-                    correct_answer="B",
-                    explanation="Sample explanation.",
-                    is_active=True,
-                ),
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"What is the primary purpose of {module.title}?",
-                    question_type=QuestionType.MULTIPLE_CHOICE,
-                    order_index=3,
-                    points=10,
-                    options={
-                        "A": "Purpose A",
-                        "B": "Purpose B",
-                        "C": "Purpose C",
-                        "D": "Purpose D"
-                    },
-                    correct_answer="C",
-                    explanation="Sample explanation.",
-                    is_active=True,
-                ),
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"Which feature is most important in {module.title}?",
-                    question_type=QuestionType.MULTIPLE_CHOICE,
-                    order_index=4,
-                    points=10,
-                    options={
-                        "A": "Feature A",
-                        "B": "Feature B",
-                        "C": "Feature C",
-                        "D": "Feature D"
-                    },
-                    correct_answer="D",
-                    explanation="Sample explanation.",
-                    is_active=True,
-                ),
-            ])
-            # 3 True/False
-            assessments.extend([
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"True or False: {module.title} requires prior knowledge.",
-                    question_type=QuestionType.TRUE_FALSE,
-                    order_index=5,
-                    points=10,
-                    options=None,
-                    correct_answer="True",
-                    explanation="Sample explanation.",
-                    is_active=True,
-                ),
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"True or False: {module.title} is only used in specific contexts.",
-                    question_type=QuestionType.TRUE_FALSE,
-                    order_index=6,
-                    points=10,
-                    options=None,
-                    correct_answer="False",
-                    explanation="Sample explanation.",
-                    is_active=True,
-                ),
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"True or False: {module.title} is a fundamental concept.",
-                    question_type=QuestionType.TRUE_FALSE,
-                    order_index=7,
-                    points=10,
-                    options=None,
-                    correct_answer="True",
-                    explanation="Sample explanation.",
-                    is_active=True,
-                ),
-            ])
-            # 3 Short Answer
-            assessments.extend([
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"Explain a key concept from {module.title} in your own words.",
-                    question_type=QuestionType.SHORT_ANSWER,
-                    order_index=8,
-                    points=10,
-                    options=None,
-                    correct_answer="",
-                    explanation="Instructor will review your answer.",
-                    is_active=True,
-                ),
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"Describe how {module.title} relates to blockchain technology.",
-                    question_type=QuestionType.SHORT_ANSWER,
-                    order_index=9,
-                    points=10,
-                    options=None,
-                    correct_answer="",
-                    explanation="Instructor will review your answer.",
-                    is_active=True,
-                ),
-                Assessment(
-                    module_id=module.id,
-                    question_text=f"What are the main benefits of understanding {module.title}?",
-                    question_type=QuestionType.SHORT_ANSWER,
-                    order_index=10,
-                    points=10,
-                    options=None,
-                    correct_answer="",
-                    explanation="Instructor will review your answer.",
-                    is_active=True,
-                ),
-            ])
+            # Fallback: Should not happen, but handle gracefully
+            print(f"Warning: No assessments found for module {module.id}")
 
     session.add_all(assessments)
     await session.flush()

@@ -1,4 +1,6 @@
 ---
+description: FastAPI backend development guidelines with SQLAlchemy, Pydantic, and async patterns
+globs: ["app/backend/**/*.py"]
 alwaysApply: false
 ---
 

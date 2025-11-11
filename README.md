@@ -8,7 +8,7 @@ This project provides a comprehensive, full-stack educational platform for crypt
 
 ## 📚 Curriculum Structure
 
-### Part 1: The "User" Track (Foundations) ✅ COMPLETE
+### Part 1: The "User" Track (Foundations)
 **Goal**: Create an informed, safe, and competent user of Web3
 
 - **Module 1**: Blockchain Technology (2h)
@@ -19,21 +19,21 @@ This project provides a comprehensive, full-stack educational platform for crypt
 - **Module 6**: DeFi & DAOs (2.5h)
 - **Module 7**: Advanced Concepts Overview (2.5h)
 
-### Part 2: The "Power User" / Analyst Track ✅ COMPLETE
+### Part 2: The "Power User" / Analyst Track
 **Goal**: Bridge the gap from using the chain to analyzing it
 
 - **Module 8**: Practical On-Chain Analysis (3h)
 - **Module 9**: Advanced Market & Tokenomic Analysis (4h)
 - **Module 10**: Advanced DeFi Strategies (3h)
 
-### Part 3: The "Developer" Track ✅ COMPLETE
+### Part 3: The "Developer" Track
 **Goal**: Build technical skills for smart contracts and dApps
 
 - **Module 11**: Development & Programming Prerequisites (3h)
 - **Module 12**: Smart Contract Development (Solidity & EVM) (6h)
 - **Module 13**: dApp Development & Tooling (4h)
 
-### Part 4: The "Architect" / Builder Track ✅ COMPLETE
+### Part 4: The "Architect" / Builder Track
 **Goal**: Use developer skills to build complex, novel systems
 
 - **Module 14**: Creating a Fungible Token & ICO (4h)
@@ -79,7 +79,7 @@ This project uses a specialized AI agent framework in Cursor for efficient devel
 4. **Database Schema Agent** - PostgreSQL models & migrations
 5. **Trading Bot Framework Agent** - AI trading bot system
 
-📖 **Full documentation**: See [`cursor/AI_AGENT_SYSTEM.md`](cursor/AI_AGENT_SYSTEM.md)
+📖 **Full documentation**: See [`docs/guides/ai-agent-system.md`](docs/guides/ai-agent-system.md)
 
 ## 📁 Project Structure
 
@@ -92,12 +92,12 @@ crypto-curriculum/
 │   ├── code-examples/           # Reference code for teaching
 │   │   └── module-17/           # AI agent examples (Python)
 │   ├── blockchain curriculum outline.md
-│   ├── blockchain curriculum part 1.md (✅ Complete)
-│   ├── blockchain curriculum part 2.md (✅ Complete)
-│   ├── blockchain curriculum part 3.md (✅ Complete)
-│   └── blockchain curriculum part 4.md (✅ Complete)
+│   ├── blockchain curriculum part 1.md
+│   ├── blockchain curriculum part 2.md
+│   ├── blockchain curriculum part 3.md
+│   └── blockchain curriculum part 4.md
 │
-├── app/                          # 💻 Application code (to be initialized)
+├── app/                          # 💻 Application code
 │   ├── frontend/                 # React application
 │   │   ├── src/
 │   │   │   ├── components/      # Reusable UI components
@@ -132,8 +132,7 @@ crypto-curriculum/
 │       ├── requirements.txt
 │       └── README.md            # Backend-specific docs
 │
-├── cursor/                       # 🤖 AI agent configurations
-│   ├── AI_AGENT_SYSTEM.md       # Agent system documentation
+├── .cursor/                      # 🤖 AI agent configurations (Cursor's standard location)
 │   └── rules/                    # Agent rule files
 │       ├── masterOrchestrator.mdc
 │       ├── frontendComponentAgent.mdc
@@ -147,23 +146,23 @@ crypto-curriculum/
 │
 ├── docs/                         # 📖 Project documentation
 │   ├── api/
-│   │   └── endpoints.md          # ✅ API endpoint reference
+│   │   └── endpoints.md          # API endpoint reference
 │   ├── architecture/
-│   │   ├── database-schema.md    # ✅ Database design & ERD
-│   │   └── component-hierarchy.md # ✅ React component structure
-│   ├── deployment/               # Deployment guides (to create)
+│   │   ├── database-schema.md    # Database design & ERD
+│   │   └── component-hierarchy.md # React component structure
+│   ├── deployment/               # Deployment guides
 │   ├── guides/
-│   │   └── development-workflow.md # ✅ Git workflow & best practices
+│   │   └── development-workflow.md # Git workflow & best practices
 │   ├── templates/
-│   │   ├── frontend.env.example  # ✅ Frontend environment template
-│   │   └── backend.env.example   # ✅ Backend environment template
+│   │   ├── frontend.env.example  # Frontend environment template
+│   │   └── backend.env.example   # Backend environment template
 │   └── README.md                 # Documentation guidelines
 │
 ├── .github/                      # 🔧 GitHub configuration
 │   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md         # ✅ Bug report template
-│   │   └── feature_request.md    # ✅ Feature request template
-│   └── pull_request_template.md  # ✅ PR template
+│   │   ├── bug_report.md         # Bug report template
+│   │   └── feature_request.md    # Feature request template
+│   └── pull_request_template.md  # PR template
 │
 └── scripts/                      # 🔧 Automation scripts
     └── README.md                 # Script guidelines
@@ -299,116 +298,6 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-## 📊 Current Status
-
-### ✅ Phase 1: Planning & Content - COMPLETE
-- [x] Complete curriculum content (Parts 1-4, all 17 modules)
-- [x] Module 17 code examples (AI trading bot framework)
-- [x] AI agent system for development
-- [x] Design examples and prototypes
-- [x] Project structure and documentation
-- [x] GitHub repository with branch strategy
-- [x] Database schema design
-- [x] API endpoint specifications
-- [x] Component hierarchy planning
-- [x] Environment configuration templates
-- [x] Development workflow documentation
-- [x] GitHub issue/PR templates
-
-**Total Curriculum:** 49+ hours of instruction across 4 tracks
-
-### ✅ Phase 2: Local Foundation - COMPLETE
-
-**Complete Development Checklist:** See [Development Checklist](docs/DEVELOPMENT_CHECKLIST.md) for a detailed local-first development plan.
-
-**Phase 2 Status:** ✅ **COMPLETE** - Local development environment fully operational
-- Backend FastAPI server running on port 9000
-- Frontend React app running on port 5173
-- PostgreSQL database with 16 core tables
-- Alembic migrations configured and applied
-- Database seeded with 17 modules and 3 users
-- All services operational on localhost
-
-### ✅ Phase 3: Authentication & User Management - COMPLETE
-
-**Phase 3 Status:** ✅ **COMPLETE** - Authentication system fully operational
-- JWT token authentication with HTTPBearer
-- Password hashing with bcrypt
-- Role-based access control (RBAC)
-- User registration and login
-- Protected routes with token validation
-- Frontend authentication UI with Liquid Glass design
-- Token storage with expiry management
-
-#### Foundation Setup
-- [ ] Initialize frontend (Vite + React + MUI + Liquid Glass UI + Framer Motion)
-- [ ] Initialize backend (FastAPI + PostgreSQL + SQLAlchemy)
-- [ ] Implement complete database schema (16 tables)
-- [ ] Build JWT authentication with role-based access
-- [ ] Set up development environment
-
-#### Student Core Features
-- [ ] Module and lesson display system
-- [ ] Progress tracking dashboard
-- [ ] Auto-graded assessments (MC, T/F)
-- [ ] Student progress visualization
-- [ ] Responsive Liquid Glass UI implementation
-
-#### Instructor Features
-- [ ] Instructor dashboard with analytics
-- [ ] Cohort management (create, enroll, assign)
-- [ ] Manual grading interface with rubrics
-- [ ] Student monitoring and at-risk detection
-- [ ] Grade export and reporting
-
-#### Code Submission & Review
-- [ ] Deferred to Phase 3 future enhancements (tracked below)
-
-#### Communication & Collaboration
-- [ ] Discussion forums (module-specific)
-- [ ] Forum posts, replies, upvoting
-- [ ] Built-in AI learning assistant
-- [ ] Notification system
-- [ ] Email notifications (configurable)
-
-#### Gamification & Engagement
-- [ ] Achievement and badge system (20+ badges)
-- [ ] Student portfolio showcase
-- [ ] Leaderboard (opt-in, privacy-focused)
-- [ ] Advanced analytics for students and instructors
-
-#### AI Trading Bot Integration
-- [ ] Bot configuration interface
-- [ ] Backtesting system with historical data
-- [ ] Paper trading simulation
-- [ ] Performance analytics dashboard
-- [ ] Strategy comparison tools
-
-#### Polish & Content
-- [ ] Create 170 assessment questions
-- [ ] Import all curriculum content
-- [ ] Comprehensive testing (unit, integration, E2E)
-- [ ] UI/UX refinement across all screens
-- [ ] Accessibility audit (WCAG 2.1 AA)
-- [ ] Beta testing with real students
-- [ ] Documentation completion
-
-### 🚀 Phase 3: Deployment & Production Readiness
-- [ ] Promote the working local build to Google Cloud (Cloud Run + Cloud SQL)
-- [ ] Harden infrastructure (monitoring, logging, CI/CD, budgets)
-- [ ] Prepare MVP launch artifacts (beta cohorts, documentation)
-- [ ] Deliver code-review feature set: GitHub integration, code viewer, instructor review tooling, rubric grading, peer review, submission versioning
-- [ ] Coding assessments continue to be reviewed externally per curriculum design.
-
-### 🚀 Phase 3: Deployment - UPCOMING
-- [ ] CI/CD pipeline setup
-- [ ] Production environment configuration
-- [ ] Performance optimization
-- [ ] Security audit
-- [ ] Documentation finalization
-- [ ] Beta testing with students
-- [ ] Production deployment
-
 ## 📚 Documentation Quick Links
 
 ### Getting Started
@@ -436,7 +325,7 @@ docker-compose logs -f
 - [Module 17 Code Examples](curriculum/code-examples/module-17/) - AI trading bot examples
 
 ### AI Agent System
-- [AI Agent System Guide](cursor/AI_AGENT_SYSTEM.md) - How to use the development agents
+- [AI Agent System Guide](docs/guides/ai-agent-system.md) - How to use the development agents
 
 ---
 

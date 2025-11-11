@@ -1,4 +1,5 @@
 ---
+description: Master orchestrator for coordinating all development tasks and maintaining project consistency
 alwaysApply: true
 ---
 
@@ -42,22 +43,22 @@ When working on specific tasks, activate the appropriate specialized agent:
 
 ### 1. Frontend Component Agent
 **Activate when**: Building React components, pages, or UI elements
-**File**: `/cursor/rules/frontendComponentAgent.mdc`
+**File**: `.cursor/rules/frontendComponentAgent.mdc`
 **Responsibilities**: React + TypeScript + MUI + Tailwind components
 
 ### 2. Backend API Agent
 **Activate when**: Creating API endpoints, services, or business logic
-**File**: `/cursor/rules/backendApiAgent.mdc`
+**File**: `.cursor/rules/backendApiAgent.mdc`
 **Responsibilities**: FastAPI routes, services, Pydantic schemas
 
 ### 3. Database Schema Agent
 **Activate when**: Designing models, creating migrations, or schema changes
-**File**: `/cursor/rules/databaseSchemaAgent.mdc`
+**File**: `.cursor/rules/databaseSchemaAgent.mdc`
 **Responsibilities**: SQLAlchemy models, Alembic migrations
 
 ### 4. Trading Bot Framework Agent
 **Activate when**: Building AI agent system for Module 17
-**File**: `/cursor/rules/tradingBotAgent.mdc`
+**File**: `.cursor/rules/tradingBotAgent.mdc`
 **Responsibilities**: LLM-agnostic agent framework, tools, providers
 
 ## Project Structure
@@ -97,14 +98,16 @@ When working on specific tasks, activate the appropriate specialized agent:
 │       ├── tests/
 │       ├── main.py
 │       └── requirements.txt
-├── cursor/
-│   └── rules/                    # Agent configurations
+├── .cursor/
+│   └── rules/                    # Agent configurations (Cursor's standard location)
 │       ├── systemPrompt.mdc      # Curriculum content guidelines
 │       ├── frontendComponentAgent.mdc
 │       ├── backendApiAgent.mdc
 │       ├── databaseSchemaAgent.mdc
 │       ├── tradingBotAgent.mdc
 │       └── masterOrchestrator.mdc (this file)
+└── cursor/
+    └── AI_AGENT_SYSTEM.md        # Documentation
 ├── dev/                          # Design examples
 └── modules/                      # (May not be needed)
 ```

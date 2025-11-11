@@ -1,4 +1,6 @@
 ---
+description: Trading bot framework educational examples and LLM-agnostic agent architecture
+globs: ["curriculum/code-examples/**/*.py", "app/backend/ai_agent/**/*.py"]
 alwaysApply: false
 ---
 

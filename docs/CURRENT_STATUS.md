@@ -15,7 +15,7 @@
 - [x] Logout button integration
 
 ### Theme & Styling (Partial)
-- [x] Updated MUI theme to dark mode (#0a0e27 background)
+- [x] Updated MUI theme to dark mode (`#0a0e27` background)
 - [x] Updated `index.css` for dark background
 - [x] Applied dark theme to all pages (HomePage, ModulesListPage, AssessmentsListPage, ModulePage, AssessmentPage)
 

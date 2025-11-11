@@ -1,8 +1,8 @@
 /** Assessment page component */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Button, Typography, CircularProgress, Alert, Paper } from '@mui/material';
-import { ArrowBack, ArrowForward, CheckCircle, Send } from '@mui/icons-material';
+import { Box, Button, Typography, CircularProgress, Alert, Paper, Container } from '@mui/material';
+import { ArrowBack, ArrowForward, Send } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { assessmentService } from '../services/assessmentService';
@@ -11,7 +11,7 @@ import { MultipleChoice } from '../components/assessment/MultipleChoice';
 import { TrueFalse } from '../components/assessment/TrueFalse';
 import { ShortAnswer } from '../components/assessment/ShortAnswer';
 import { QuizResults } from '../components/assessment/QuizResults';
-import type { Assessment, AssessmentSubmitResponse } from '../types/assessment';
+import type { AssessmentSubmitResponse } from '../types/assessment';
 import { QuestionType } from '../types/assessment';
 
 export const AssessmentPage: React.FC = () => {
@@ -39,7 +39,6 @@ export const AssessmentPage: React.FC = () => {
   // Fetch results
   const {
     data: resultsData,
-    isLoading: isLoadingResults,
   } = useQuery({
     queryKey: ['assessment-results', moduleId],
     queryFn: () => assessmentService.getModuleResults(Number(moduleId)),
@@ -90,15 +89,9 @@ export const AssessmentPage: React.FC = () => {
     if (currentQuestionIndex < assessments.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
-      // Show results
+      // Last question - show results
       setShowResults(true);
       queryClient.invalidateQueries({ queryKey: ['assessment-results', moduleId] });
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
     }
   };
 
@@ -111,7 +104,7 @@ export const AssessmentPage: React.FC = () => {
 
   if (isLoadingAssessments) {
     return (
-      <Box className="min-h-screen flex items-center justify-center">
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0e27' }}>
         <CircularProgress />
       </Box>
     );
@@ -119,10 +112,18 @@ export const AssessmentPage: React.FC = () => {
 
   if (assessmentError) {
     return (
-      <Box className="min-h-screen flex items-center justify-center p-4">
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
         <Alert severity="error">
           Failed to load assessments. Please try again.
         </Alert>
+      </Box>
+    );
+  }
+
+  if (assessments.length === 0) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+        <Alert severity="info">No assessments available for this module.</Alert>
       </Box>
     );
   }
@@ -133,48 +134,51 @@ export const AssessmentPage: React.FC = () => {
 
   if (!currentAssessment) {
     return (
-      <Box className="min-h-screen flex items-center justify-center p-4">
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
         <Alert severity="info">No assessments available for this module.</Alert>
       </Box>
     );
   }
 
   const isAnswerSubmitted = currentResult !== undefined;
-  const canProceed = isAnswerSubmitted || currentAnswer.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-blue-900 p-4">
-      <div className="max-w-4xl mx-auto">
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27', py: 4 }}>
+      <Container maxWidth="md">
         {/* Header */}
-        <Box className="mb-6">
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/')}
-            className="mb-4"
-          >
-            Back to Modules
-          </Button>
-          <Typography variant="h4" component="h1" className="font-bold mb-2">
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ffffff', mb: 2 }}>
             {assessmentData?.module_title}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
             {assessmentData?.total_points} points • Estimated time: {assessmentData?.estimated_time_minutes} minutes
           </Typography>
         </Box>
 
         {/* Progress Bar */}
-        <Paper className="glass-surface rounded-2xl p-4 mb-6" elevation={0}>
-          <Box className="flex items-center justify-between mb-2">
-            <Typography variant="body2" color="text.secondary">
+        <Paper
+          sx={{
+            backgroundColor: '#ffffff',
+            borderRadius: 2,
+            p: 3,
+            mb: 4,
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="body2" sx={{ color: '#666666' }}>
               Progress: {currentQuestionIndex + 1} / {assessments.length}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: '#666666' }}>
               {Math.round(((currentQuestionIndex + 1) / assessments.length) * 100)}%
             </Typography>
           </Box>
-          <Box className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <Box sx={{ width: '100%', height: 8, backgroundColor: '#e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
             <motion.div
-              className="bg-primary h-2 rounded-full"
+              style={{
+                height: '100%',
+                backgroundColor: '#1976d2',
+              }}
               initial={{ width: 0 }}
               animate={{ width: `${((currentQuestionIndex + 1) / assessments.length) * 100}%` }}
               transition={{ duration: 0.3 }}
@@ -221,37 +225,61 @@ export const AssessmentPage: React.FC = () => {
         </QuestionCard>
 
         {/* Action Buttons */}
-        <Box className="flex justify-between items-center">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
           <Button
             startIcon={<ArrowBack />}
-            onClick={handlePrevious}
-            disabled={currentQuestionIndex === 0}
+            onClick={() => navigate(`/modules/${moduleId}`)}
             variant="outlined"
+            sx={{
+              borderColor: '#999999',
+              color: '#ffffff',
+              '&:hover': {
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              },
+            }}
           >
-            Previous
+            Back to Module
           </Button>
 
-          {!isAnswerSubmitted ? (
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {!isAnswerSubmitted && currentAnswer && (
+              <Button
+                variant="contained"
+                startIcon={<Send />}
+                onClick={handleSubmitAnswer}
+                disabled={submitAnswerMutation.isPending}
+                sx={{
+                  backgroundColor: '#1976d2',
+                  '&:hover': {
+                    backgroundColor: '#1565c0',
+                  },
+                }}
+              >
+                Submit Answer
+              </Button>
+            )}
+
             <Button
-              endIcon={<Send />}
-              onClick={handleSubmitAnswer}
-              disabled={!currentAnswer || submitAnswerMutation.isPending}
               variant="contained"
-            >
-              {submitAnswerMutation.isPending ? 'Submitting...' : 'Submit Answer'}
-            </Button>
-          ) : (
-            <Button
               endIcon={<ArrowForward />}
               onClick={handleNext}
-              variant="contained"
+              disabled={!isAnswerSubmitted && !currentAnswer}
+              sx={{
+                backgroundColor: '#1976d2',
+                '&:hover': {
+                  backgroundColor: '#1565c0',
+                },
+                '&:disabled': {
+                  backgroundColor: '#999999',
+                },
+              }}
             >
               {currentQuestionIndex === assessments.length - 1 ? 'View Results' : 'Next'}
             </Button>
-          )}
+          </Box>
         </Box>
-      </div>
-    </div>
+      </Container>
+    </Box>
   );
 };
-

@@ -114,7 +114,17 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ results, onRetake }) =
             >
               Back to Home
             </Button>
-            {!canProgress && (
+            {canProgress ? (
+              <Button
+                variant="contained"
+                onClick={() => {
+                  const moduleId = window.location.pathname.split('/')[2];
+                  navigate(`/modules/${moduleId}`);
+                }}
+              >
+                Back to Module
+              </Button>
+            ) : (
               <Button
                 variant="contained"
                 onClick={onRetake}

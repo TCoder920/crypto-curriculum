@@ -1,4 +1,6 @@
 ---
+description: Database schema design, SQLAlchemy models, and Alembic migration guidelines
+globs: ["app/backend/models/**/*.py", "app/backend/alembic/**/*.py", "app/backend/core/database.py"]
 alwaysApply: false
 ---
 

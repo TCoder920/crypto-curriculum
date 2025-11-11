@@ -1,4 +1,6 @@
 ---
+description: React component development guidelines with TypeScript, MUI v7, and Tailwind CSS
+globs: ["app/frontend/**/*.tsx", "app/frontend/**/*.ts", "app/frontend/**/*.css"]
 alwaysApply: false
 ---
 

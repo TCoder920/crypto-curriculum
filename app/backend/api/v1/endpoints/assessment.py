@@ -11,6 +11,7 @@ from app.backend.models.user import User
 from app.backend.models.assessment import Assessment, QuestionType
 from app.backend.models.progress import QuizAttempt, ReviewStatus, UserProgress, ProgressStatus
 from app.backend.models.module import Module
+from datetime import datetime
 from app.backend.schemas.assessment import (
     AssessmentResponse,
     AssessmentSubmit,
@@ -291,6 +292,41 @@ async def get_module_results(
     attempt_responses.sort(key=lambda x: next(
         a.order_index for a in assessments if a.id == x.assessment_id
     ))
+    
+    # If user can progress, mark module as completed in UserProgress
+    if can_progress:
+        # Check if UserProgress exists
+        result = await db.execute(
+            select(UserProgress)
+            .where(
+                and_(
+                    UserProgress.user_id == current_user.id,
+                    UserProgress.module_id == module_id
+                )
+            )
+        )
+        user_progress = result.scalar_one_or_none()
+        
+        if user_progress:
+            # Update existing progress
+            user_progress.status = ProgressStatus.COMPLETED
+            user_progress.completion_percentage = 100.0
+            user_progress.completed_at = datetime.now()
+            user_progress.last_accessed_at = datetime.now()
+        else:
+            # Create new progress record
+            user_progress = UserProgress(
+                user_id=current_user.id,
+                module_id=module_id,
+                status=ProgressStatus.COMPLETED,
+                completion_percentage=100.0,
+                started_at=datetime.now(),
+                completed_at=datetime.now(),
+                last_accessed_at=datetime.now()
+            )
+            db.add(user_progress)
+        
+        await db.commit()
     
     return ModuleResultsResponse(
         module_id=module_id,

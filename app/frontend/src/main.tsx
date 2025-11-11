@@ -20,9 +20,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
       </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>,

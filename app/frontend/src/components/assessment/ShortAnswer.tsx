@@ -1,6 +1,6 @@
 /** Short answer question component */
-import React, { useState } from 'react';
-import { Box, TextField, Typography, Alert, CircularProgress } from '@mui/material';
+import React from 'react';
+import { Box, TextField, Typography, Alert } from '@mui/material';
 import { CheckCircle, HourglassEmpty } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import type { Assessment, AssessmentSubmitResponse } from '../../types/assessment';

@@ -1,6 +1,6 @@
 /** Multiple choice question component */
-import React, { useState } from 'react';
-import { Box, Button, Typography, Radio, RadioGroup, FormControlLabel, FormControl } from '@mui/material';
+import React from 'react';
+import { Box, Typography, Radio, RadioGroup, FormControlLabel, FormControl } from '@mui/material';
 import { CheckCircle, Cancel } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import type { Assessment, AssessmentSubmitResponse } from '../../types/assessment';
@@ -22,17 +22,6 @@ export const MultipleChoice: React.FC<MultipleChoiceProps> = ({
 }) => {
   const options = assessment.options || {};
   const optionKeys = Object.keys(options).sort();
-
-  const getOptionColor = (optionKey: string) => {
-    if (!result || !selectedAnswer) return 'default';
-    
-    const isSelected = selectedAnswer === optionKey;
-    const isCorrect = result.correct_answer === optionKey;
-    
-    if (isCorrect) return 'success';
-    if (isSelected && !isCorrect) return 'error';
-    return 'default';
-  };
 
   return (
     <FormControl component="fieldset" fullWidth disabled={disabled}>

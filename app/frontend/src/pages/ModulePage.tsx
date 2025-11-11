@@ -1,89 +1,293 @@
-import React from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  Grid,
-  Typography,
-} from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
-import { curriculumModules, learningTracks } from '../data/curriculum'
+/** Module page - displays lessons and assessment link */
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Box, Button, Typography, Paper, CircularProgress, Alert, Divider, Container } from '@mui/material';
+import { ArrowBack, ArrowForward, Assessment, CheckCircle } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
+import { moduleService } from '../services/moduleService';
+import { assessmentService } from '../services/assessmentService';
+import type { Lesson } from '../types/module';
 
 export const ModulePage: React.FC = () => {
-  const { moduleId } = useParams<{ moduleId: string }>()
-  const navigate = useNavigate()
-  const module = curriculumModules.find((item) => item.id === Number(moduleId))
-  const track = learningTracks.find((item) => item.id === module?.trackId)
+  const { moduleId } = useParams<{ moduleId: string }>();
+  const navigate = useNavigate();
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
 
-  if (!module) {
+  // Fetch module details
+  const {
+    data: moduleData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['module', moduleId],
+    queryFn: () => moduleService.getModuleDetail(Number(moduleId)),
+    enabled: !!moduleId,
+  });
+
+  // Check if user has completed assessment
+  const {
+    data: assessmentResults,
+    refetch: refetchResults,
+  } = useQuery({
+    queryKey: ['assessment-results', moduleId],
+    queryFn: () => assessmentService.getModuleResults(Number(moduleId)),
+    enabled: !!moduleId && !!moduleData?.has_assessment,
+  });
+
+  // Refetch results when returning from assessment
+  React.useEffect(() => {
+    if (moduleData?.has_assessment) {
+      refetchResults();
+    }
+  }, [moduleData?.has_assessment, refetchResults]);
+
+  const lessons = moduleData?.lessons || [];
+  const currentLesson: Lesson | undefined = lessons[currentLessonIndex];
+  const hasPassedAssessment = assessmentResults?.can_progress === true;
+
+  const handleNextLesson = () => {
+    if (currentLessonIndex < lessons.length - 1) {
+      setCurrentLessonIndex((prev) => prev + 1);
+    }
+  };
+
+  const handlePreviousLesson = () => {
+    if (currentLessonIndex > 0) {
+      setCurrentLessonIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleTakeAssessment = () => {
+    navigate(`/modules/${moduleId}/assessments`);
+  };
+
+  if (isLoading) {
     return (
-      <Box className="min-h-screen flex items-center justify-center p-4">
-        <Alert severity="warning">Module not found. Please select a valid module.</Alert>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0e27' }}>
+        <CircularProgress />
       </Box>
-    )
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+        <Alert severity="error">
+          Failed to load module. Please try again.
+        </Alert>
+      </Box>
+    );
+  }
+
+  if (!moduleData) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, backgroundColor: '#0a0e27' }}>
+        <Alert severity="info">Module not found.</Alert>
+      </Box>
+    );
   }
 
   return (
-    <Box className="min-h-screen bg-gradient-to-b from-white to-slate-100 py-8">
-      <Container maxWidth="md">
-        <Button onClick={() => navigate('/modules')} className="mb-4">
-          ← Back to modules
-        </Button>
-
-        <Card className="rounded-3xl shadow-lg mb-4">
-          <CardContent className="space-y-4">
-            <Box className="flex flex-wrap gap-2 items-center justify-between">
-              {track && (
-                <Chip
-                  label={`${track.title} • ${track.moduleRange}`}
-                  sx={{ backgroundColor: '#111827', color: '#fff' }}
-                />
-              )}
-              <Typography color="text.secondary">Module {module.id}</Typography>
-            </Box>
-            <Typography variant="h4" className="font-bold">
-              {module.title}
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#0a0e27', py: 4 }}>
+      <Container maxWidth="lg">
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ffffff', mb: 2 }}>
+            {moduleData.title}
+          </Typography>
+          {moduleData.description && (
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
+              {moduleData.description}
             </Typography>
-            <Typography color="text.secondary">{module.summary}</Typography>
-          </CardContent>
-        </Card>
+          )}
+          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+            Track: {moduleData.track} • Duration: {moduleData.duration_hours} hours
+          </Typography>
+        </Box>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={7}>
-            <Card className="rounded-3xl h-full">
-              <CardContent className="space-y-3">
-                <Typography variant="h6">Key Topics</Typography>
-                {module.focus.map((topic) => (
-                  <Typography key={topic}>• {topic}</Typography>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <Card className="rounded-3xl h-full">
-              <CardContent className="space-y-2">
-                <Typography variant="h6">Next Steps</Typography>
-                <Typography variant="body2">
-                  Review the lessons for this module, then take the 10-question assessment to verify
-                  mastery. A 70% score unlocks the next module in the track.
+        {/* Lesson Content */}
+        {currentLesson ? (
+          <motion.div
+            key={currentLesson.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Paper
+              sx={{
+                backgroundColor: '#ffffff',
+                borderRadius: 3,
+                p: 4,
+                mb: 4,
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="caption" sx={{ color: '#666666', display: 'block', mb: 2 }}>
+                  Lesson {currentLessonIndex + 1} of {lessons.length}
+                  {currentLesson.estimated_minutes && ` • ${currentLesson.estimated_minutes} minutes`}
                 </Typography>
-                <Box className="flex flex-col gap-2 pt-2">
-                  <Button variant="contained" onClick={() => navigate(`/modules/${module.id}/assessments`)}>
-                    Start Assessment
+                <Typography variant="h5" sx={{ fontWeight: 'semibold', color: '#1a1a1a', mb: 3 }}>
+                  {currentLesson.title}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 3 }} />
+
+              <Box sx={{ color: '#1a1a1a' }}>
+                <ReactMarkdown>{currentLesson.content}</ReactMarkdown>
+              </Box>
+            </Paper>
+
+            {/* Lesson Navigation */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+              <Button
+                startIcon={<ArrowBack />}
+                onClick={handlePreviousLesson}
+                disabled={currentLessonIndex === 0}
+                variant="outlined"
+                sx={{
+                  borderColor: '#999999',
+                  color: '#1a1a1a',
+                  backgroundColor: '#ffffff',
+                  '&:hover': {
+                    borderColor: '#666666',
+                    backgroundColor: '#f5f5f5',
+                  },
+                }}
+              >
+                Previous Lesson
+              </Button>
+
+              {currentLessonIndex < lessons.length - 1 ? (
+                <Button
+                  endIcon={<ArrowForward />}
+                  onClick={handleNextLesson}
+                  variant="contained"
+                  sx={{
+                    backgroundColor: '#1976d2',
+                    '&:hover': {
+                      backgroundColor: '#1565c0',
+                    },
+                  }}
+                >
+                  Next Lesson
+                </Button>
+              ) : (
+                <Button
+                  endIcon={<ArrowForward />}
+                  onClick={handleNextLesson}
+                  disabled
+                  variant="outlined"
+                  sx={{
+                    borderColor: '#999999',
+                    color: '#999999',
+                  }}
+                >
+                  Last Lesson
+                </Button>
+              )}
+            </Box>
+          </motion.div>
+        ) : (
+          <Paper
+            sx={{
+              backgroundColor: '#ffffff',
+              borderRadius: 3,
+              p: 3,
+              mb: 4,
+            }}
+          >
+            <Alert severity="info">No lessons available for this module.</Alert>
+          </Paper>
+        )}
+
+        {/* Assessment Section - Always visible if module has assessments */}
+        {moduleData.has_assessment && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <Paper
+              sx={{
+                backgroundColor: '#ffffff',
+                borderRadius: 3,
+                p: 4,
+                textAlign: 'center',
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              {hasPassedAssessment ? (
+                <>
+                  <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a1a1a', mb: 2 }}>
+                    Assessment Complete!
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: '#666666', mb: 4 }}>
+                    You've successfully completed this module with a score of {assessmentResults?.score_percent.toFixed(1)}%.
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => navigate('/modules')}
+                      sx={{
+                        borderColor: '#999999',
+                        color: '#1a1a1a',
+                        '&:hover': {
+                          borderColor: '#666666',
+                          backgroundColor: '#f5f5f5',
+                        },
+                      }}
+                    >
+                      Browse Modules
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<Assessment />}
+                      onClick={handleTakeAssessment}
+                      sx={{
+                        backgroundColor: '#1976d2',
+                        '&:hover': {
+                          backgroundColor: '#1565c0',
+                        },
+                      }}
+                    >
+                      Retake Assessment
+                    </Button>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <Assessment sx={{ fontSize: 64, color: '#1976d2', mb: 2 }} />
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a1a1a', mb: 2 }}>
+                    Module Assessment
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: '#666666', mb: 4 }}>
+                    Test your knowledge with 10 comprehensive questions. You can take the assessment at any time.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    startIcon={<Assessment />}
+                    onClick={handleTakeAssessment}
+                    sx={{
+                      backgroundColor: '#1976d2',
+                      '&:hover': {
+                        backgroundColor: '#1565c0',
+                      },
+                    }}
+                  >
+                    Take Assessment
                   </Button>
-                  <Button variant="outlined" onClick={() => navigate('/assessments')}>
-                    Browse All Assessments
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+                </>
+              )}
+            </Paper>
+          </motion.div>
+        )}
       </Container>
     </Box>
-  )
-}
+  );
+};

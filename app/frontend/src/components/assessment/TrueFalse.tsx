@@ -14,7 +14,6 @@ interface TrueFalseProps {
 }
 
 export const TrueFalse: React.FC<TrueFalseProps> = ({
-  assessment,
   selectedAnswer,
   onAnswerSelect,
   result,
@@ -23,34 +22,34 @@ export const TrueFalse: React.FC<TrueFalseProps> = ({
   const showResult = result !== null && result !== undefined;
   const correctAnswer = result?.correct_answer?.toUpperCase();
 
-  const getButtonProps = (value: string) => {
+  const getButtonProps = (value: string): { variant: 'contained' | 'outlined'; color: 'primary' | 'success' | 'error' | 'inherit' } => {
     const isSelected = selectedAnswer?.toUpperCase() === value;
     const isCorrect = correctAnswer === value;
     
     if (!showResult) {
       return {
-        variant: isSelected ? 'contained' : 'outlined' as const,
-        color: 'primary' as const,
+        variant: isSelected ? 'contained' : 'outlined',
+        color: 'primary',
       };
     }
     
     if (isCorrect) {
       return {
-        variant: 'contained' as const,
-        color: 'success' as const,
+        variant: 'contained',
+        color: 'success',
       };
     }
     
     if (isSelected && !isCorrect) {
       return {
-        variant: 'contained' as const,
-        color: 'error' as const,
+        variant: 'contained',
+        color: 'error',
       };
     }
     
     return {
-      variant: 'outlined' as const,
-      color: 'default' as const,
+      variant: 'outlined',
+      color: 'inherit',
     };
   };
 
@@ -69,7 +68,8 @@ export const TrueFalse: React.FC<TrueFalseProps> = ({
             className="flex-1"
           >
             <Button
-              {...buttonProps}
+              variant={buttonProps.variant}
+              color={buttonProps.color}
               fullWidth
               size="large"
               onClick={() => !disabled && onAnswerSelect(option)}
