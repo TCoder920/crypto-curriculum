@@ -1,6 +1,6 @@
 # Local Development Guide
 
-Phase 2 focuses on delivering a complete LMS experience running locally. Use this checklist to configure and validate the development environment before tackling cloud deployment in Phase 3.
+This guide focuses on delivering a complete LMS experience running locally. Use this checklist to configure and validate the development environment before tackling cloud deployment.
 
 ## 1. Prerequisites
 - macOS or Linux (Windows with WSL2 works as well)
@@ -82,10 +82,10 @@ Phase 2 focuses on delivering a complete LMS experience running locally. Use thi
 - Create a `docker-compose.yml` to orchestrate API, frontend, Postgres, and MailHog locally.
 - Ensure environment variables mirror `.env` files.
 
-## 8. Preparing for Phase 3
+## 8. Preparing for Cloud Deployment
 - Document any local overrides needed during development.
 - Capture issues to address before cloud deployment (performance, migrations, data volumes).
-- When Phase 2 milestones are complete, follow the [Google Cloud Setup Guide](docs/deployment/google-cloud-setup.md) to promote the application.
+- When local development milestones are complete, follow the [Google Cloud Setup Guide](docs/deployment/google-cloud-setup.md) to promote the application.
 
 **Last Updated:** 2025-02-15
 

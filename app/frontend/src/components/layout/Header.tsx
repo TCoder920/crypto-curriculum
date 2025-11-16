@@ -9,30 +9,35 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Badge,
   Typography,
   Divider,
   Tooltip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton as DialogIconButton,
 } from '@mui/material';
 import {
   Brightness4,
   Brightness7,
-  Notifications,
   AccountCircle,
   Settings,
   Logout,
+  SmartToy,
+  Close,
 } from '@mui/icons-material';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { NotificationBell } from '../notification/NotificationBell';
+import { ChatInterface } from '../ai/ChatInterface';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { mode, toggleTheme } = useThemeMode();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
 
   // Scroll-based shrinking effect
   const { scrollY } = useScroll();
@@ -47,13 +52,6 @@ export const Header: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleNotificationMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setNotificationAnchor(event.currentTarget);
-  };
-
-  const handleNotificationMenuClose = () => {
-    setNotificationAnchor(null);
-  };
 
   const handleLogout = async () => {
     handleProfileMenuClose();
@@ -88,7 +86,6 @@ export const Header: React.FC = () => {
   };
 
   const isProfileMenuOpen = Boolean(anchorEl);
-  const isNotificationMenuOpen = Boolean(notificationAnchor);
 
   return (
     <motion.div
@@ -150,24 +147,27 @@ export const Header: React.FC = () => {
               </IconButton>
             </Tooltip>
 
+            {/* AI Chat Assistant */}
+            {user && (
+              <Tooltip title="AI Learning Assistant">
+                <IconButton
+                  onClick={() => setAiChatOpen(true)}
+                  sx={{
+                    color: mode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                    '&:hover': {
+                      color: mode === 'light' ? '#1976d2' : '#ffffff',
+                      backgroundColor: mode === 'light' ? 'rgba(25, 118, 210, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                  aria-label="AI assistant"
+                >
+                  <SmartToy />
+                </IconButton>
+              </Tooltip>
+            )}
+
             {/* Notifications */}
-            <Tooltip title="Notifications">
-              <IconButton
-                onClick={handleNotificationMenuOpen}
-                sx={{
-                  color: mode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                  '&:hover': {
-                    color: mode === 'light' ? '#1976d2' : '#ffffff',
-                    backgroundColor: mode === 'light' ? 'rgba(25, 118, 210, 0.1)' : 'rgba(255, 255, 255, 0.1)',
-                  },
-                }}
-                aria-label="notifications"
-              >
-                <Badge badgeContent={notificationCount} color="error">
-                  <Notifications />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+            {user && <NotificationBell />}
 
             {/* User Profile */}
             <Tooltip title="Account settings">
@@ -253,47 +253,36 @@ export const Header: React.FC = () => {
         </MenuItem>
       </Menu>
 
-      {/* Notifications Menu */}
-      <Menu
-        anchorEl={notificationAnchor}
-        open={isNotificationMenuOpen}
-        onClose={handleNotificationMenuClose}
+      {/* AI Chat Dialog */}
+      <Dialog
+        open={aiChatOpen}
+        onClose={() => setAiChatOpen(false)}
+        maxWidth="md"
+        fullWidth
         PaperProps={{
-          elevation: 3,
           sx: {
-            mt: 1.5,
-            minWidth: 320,
-            maxWidth: 400,
-            maxHeight: 400,
-            borderRadius: 2,
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1a1f3a',
-            border: mode === 'light' ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
+            height: '80vh',
+            maxHeight: 800,
           },
         }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-            Notifications
-          </Typography>
-        </Box>
-        <Divider />
-        {notificationCount === 0 ? (
-          <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)' }}>
-              No new notifications
-            </Typography>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SmartToy color="primary" />
+            <Typography variant="h6">AI Learning Assistant</Typography>
           </Box>
-        ) : (
-          <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-            {/* Notification items would go here */}
-            <MenuItem onClick={handleNotificationMenuClose}>
-              <Typography variant="body2">Sample notification</Typography>
-            </MenuItem>
-          </Box>
-        )}
-      </Menu>
+          <DialogIconButton
+            onClick={() => setAiChatOpen(false)}
+            aria-label="close"
+          >
+            <Close />
+          </DialogIconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <ChatInterface />
+        </DialogContent>
+      </Dialog>
+
     </motion.div>
   );
 };

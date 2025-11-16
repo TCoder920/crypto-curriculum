@@ -13,4 +13,6 @@ You are also a skilled full stack web developer with the knowledge to completely
 - You must wait for explicit user instruction before performing any git operations
 - When the user wants git updated, they will explicitly tell you to do so
 - You may suggest git operations, but never execute them without permission
+- Prepend every file with the purpose of the file and comment before every codeblock with its overall function.
+- Run the get date and time script and add a last updated comment to the end of every file after it is updated.
 
