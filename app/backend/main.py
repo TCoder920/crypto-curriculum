@@ -82,7 +82,7 @@ async def health_check():
 
 
 # Import and include routers
-from app.backend.api.v1.endpoints import auth, assessment, module, cohort, grading, forum, notification, ai_assistant
+from app.backend.api.v1.endpoints import auth, assessment, module, cohort, grading, forum, notification, ai_assistant, achievement, analytics, learning_resource
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(assessment.router, prefix="/api/v1", tags=["assessments"])
@@ -92,6 +92,9 @@ app.include_router(grading.router, prefix="/api/v1", tags=["grading"])
 app.include_router(forum.router, prefix="/api/v1", tags=["forums"])
 app.include_router(notification.router, prefix="/api/v1", tags=["notifications"])
 app.include_router(ai_assistant.router, prefix="/api/v1", tags=["ai-assistant"])
+app.include_router(achievement.router, prefix="/api/v1", tags=["achievements"])
+app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
+app.include_router(learning_resource.router, prefix="/api/v1", tags=["learning-resources"])
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ from app.backend.schemas.forum import (
 )
 from app.backend.api.v1.endpoints.auth import require_role
 from app.backend.services.notification_service import notify_forum_reply
+from app.backend.services.achievement_service import check_achievements
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -307,6 +308,14 @@ async def create_post(
     db.add(new_post)
     await db.commit()
     await db.refresh(new_post)
+    
+    # Check for achievements (forum engagement)
+    await check_achievements(
+        db=db,
+        user_id=current_user.id,
+        event_type="forum_post",
+        event_data={"post_id": new_post.id, "module_id": new_post.module_id}
+    )
     
     # Send notification if this is a reply (and not replying to own post)
     if new_post.parent_post_id and parent.user_id != current_user.id:

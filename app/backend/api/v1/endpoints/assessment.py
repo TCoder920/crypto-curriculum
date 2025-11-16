@@ -20,6 +20,7 @@ from app.backend.schemas.assessment import (
     QuizAttemptResponse,
     AssessmentListResponse,
 )
+from app.backend.services.achievement_service import check_achievements
 
 router = APIRouter()
 
@@ -138,6 +139,20 @@ async def submit_assessment_answer(
     db.add(quiz_attempt)
     await db.commit()
     await db.refresh(quiz_attempt)
+    
+    # Check for achievements (perfect score, assessment completion, etc.)
+    event_data = {
+        "assessment_id": assessment_id,
+        "module_id": assessment.module_id,
+        "is_correct": is_correct,
+        "score_percentage": (points_earned / assessment.points * 100) if points_earned else 0
+    }
+    await check_achievements(
+        db=db,
+        user_id=current_user.id,
+        event_type="assessment_submitted",
+        event_data=event_data
+    )
     
     # Prepare response
     response = AssessmentSubmitResponse(
@@ -346,6 +361,7 @@ async def get_module_results(
             db.add(user_progress)
         await db.commit()
     else:  # progress_status == COMPLETED
+        was_completed = user_progress.status == ProgressStatus.COMPLETED if user_progress else False
         if user_progress:
             user_progress.status = ProgressStatus.COMPLETED
             user_progress.completion_percentage = 100.0
@@ -365,6 +381,15 @@ async def get_module_results(
             )
             db.add(user_progress)
         await db.commit()
+        
+        # Check for achievements if module was just completed
+        if not was_completed:
+            await check_achievements(
+                db=db,
+                user_id=current_user.id,
+                event_type="module_completed",
+                event_data={"module_id": module_id, "module_title": module.title}
+            )
     
     return ModuleResultsResponse(
         module_id=module_id,

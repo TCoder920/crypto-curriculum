@@ -680,33 +680,289 @@ def generate_leaderboards(user_lookup: Dict[str, str], cohorts: List[Dict[str, o
 
 
 def generate_achievements() -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
+    """Generate 20+ achievements for gamification"""
     now = datetime.utcnow()
     achievement_id = 1
-    achievements = [
-        {
-            "id": achievement_id,
-            "name": "Module Master",
-            "description": "Complete any module with 100% score.",
-            "icon": "trophy",
-            "category": "score",
-            "criteria": json.dumps({"module_completion": {"score": 100}}),
-            "progress_tracking": json.dumps({"tracking": ["score"]}),
-            "points": 50,
-            "is_active": True,
-        },
-    ]
-    achievement_id += 1
+    achievements = []
+    
+    # Module Completion Achievements
     achievements.append({
         "id": achievement_id,
-            "name": "Forum Helper",
-            "description": "Help 10 peers in the forum.",
-            "icon": "chat",
-            "category": "engagement",
-            "criteria": json.dumps({"forum_help": {"posts": 10}}),
-            "progress_tracking": json.dumps({"forum_help": {"current": 0, "target": 10}}),
-            "points": 25,
-            "is_active": True,
-        })
+        "name": "First Steps",
+        "description": "Complete Module 1: Introduction to Cryptocurrency",
+        "icon": "star",
+        "category": "completion",
+        "criteria": json.dumps({"module_completion": {"module_id": 1}}),
+        "progress_tracking": json.dumps({"module_id": 1, "completed": False}),
+        "points": 10,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Blockchain Basics",
+        "description": "Complete Module 2: Blockchain Fundamentals",
+        "icon": "link",
+        "category": "completion",
+        "criteria": json.dumps({"module_completion": {"module_id": 2}}),
+        "progress_tracking": json.dumps({"module_id": 2, "completed": False}),
+        "points": 15,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Wallet Wizard",
+        "description": "Complete Module 3: Wallets and Security",
+        "icon": "wallet",
+        "category": "completion",
+        "criteria": json.dumps({"module_completion": {"module_id": 3}}),
+        "progress_tracking": json.dumps({"module_id": 3, "completed": False}),
+        "points": 15,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    # Perfect Score Achievements
+    achievements.append({
+        "id": achievement_id,
+        "name": "Perfect Score",
+        "description": "Score 100% on any assessment",
+        "icon": "trophy",
+        "category": "score",
+        "criteria": json.dumps({"perfect_score": {"any_assessment": True}}),
+        "progress_tracking": json.dumps({"best_score": 0, "target": 100}),
+        "points": 50,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Module Master",
+        "description": "Score 100% on Module 1 assessment",
+        "icon": "medal",
+        "category": "score",
+        "criteria": json.dumps({"perfect_score": {"module_id": 1}}),
+        "progress_tracking": json.dumps({"module_id": 1, "score": 0, "target": 100}),
+        "points": 25,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "High Achiever",
+        "description": "Score 90% or higher on any assessment",
+        "icon": "award",
+        "category": "score",
+        "criteria": json.dumps({"score_threshold": {"min_score": 90}}),
+        "progress_tracking": json.dumps({"best_score": 0, "target": 90}),
+        "points": 30,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    # Track Completion Achievements
+    achievements.append({
+        "id": achievement_id,
+        "name": "Beginner Track Complete",
+        "description": "Complete all modules in the Beginner Track (Modules 1-7)",
+        "icon": "certificate",
+        "category": "completion",
+        "criteria": json.dumps({"track_completion": {"track_name": "beginner"}}),
+        "progress_tracking": json.dumps({"track": "beginner", "completed_modules": 0, "total": 7}),
+        "points": 100,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Power User",
+        "description": "Complete all modules in the Power User/Analyst Track (Modules 8-10)",
+        "icon": "chart-line",
+        "category": "completion",
+        "criteria": json.dumps({"track_completion": {"track_name": "power_user"}}),
+        "progress_tracking": json.dumps({"track": "power_user", "completed_modules": 0, "total": 3}),
+        "points": 150,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Developer",
+        "description": "Complete all modules in the Developer Track (Modules 11-13)",
+        "icon": "code",
+        "category": "completion",
+        "criteria": json.dumps({"track_completion": {"track_name": "developer"}}),
+        "progress_tracking": json.dumps({"track": "developer", "completed_modules": 0, "total": 3}),
+        "points": 200,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Architect",
+        "description": "Complete all modules in the Architect/Builder Track (Modules 14-17)",
+        "icon": "building",
+        "category": "completion",
+        "criteria": json.dumps({"track_completion": {"track_name": "architect"}}),
+        "progress_tracking": json.dumps({"track": "architect", "completed_modules": 0, "total": 4}),
+        "points": 250,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Master Certificate",
+        "description": "Complete all 4 tracks - the ultimate achievement!",
+        "icon": "crown",
+        "category": "completion",
+        "criteria": json.dumps({"track_completion": {"all_tracks": True}}),
+        "progress_tracking": json.dumps({"tracks_completed": 0, "total": 4}),
+        "points": 500,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    # Forum Engagement Achievements
+    achievements.append({
+        "id": achievement_id,
+        "name": "Forum Helper",
+        "description": "Help 10 peers in the forum (posts marked as solved or upvoted)",
+        "icon": "hand-holding-heart",
+        "category": "engagement",
+        "criteria": json.dumps({"forum_help": {"posts": 10}}),
+        "progress_tracking": json.dumps({"forum_help": {"current": 0, "target": 10}}),
+        "points": 25,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Community Champion",
+        "description": "Help 25 peers in the forum",
+        "icon": "users",
+        "category": "engagement",
+        "criteria": json.dumps({"forum_help": {"posts": 25}}),
+        "progress_tracking": json.dumps({"forum_help": {"current": 0, "target": 25}}),
+        "points": 75,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Forum Expert",
+        "description": "Help 50 peers in the forum",
+        "icon": "star",
+        "category": "engagement",
+        "criteria": json.dumps({"forum_help": {"posts": 50}}),
+        "progress_tracking": json.dumps({"forum_help": {"current": 0, "target": 50}}),
+        "points": 150,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    # Streak Achievements
+    achievements.append({
+        "id": achievement_id,
+        "name": "7-Day Streak",
+        "description": "Maintain a 7-day learning streak",
+        "icon": "fire",
+        "category": "engagement",
+        "criteria": json.dumps({"streak": {"days": 7}}),
+        "progress_tracking": json.dumps({"streak_days": 0, "target": 7}),
+        "points": 50,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "30-Day Streak",
+        "description": "Maintain a 30-day learning streak",
+        "icon": "flame",
+        "category": "engagement",
+        "criteria": json.dumps({"streak": {"days": 30}}),
+        "progress_tracking": json.dumps({"streak_days": 0, "target": 30}),
+        "points": 200,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    # Milestone Achievements
+    achievements.append({
+        "id": achievement_id,
+        "name": "Halfway There",
+        "description": "Complete 9 modules (half of the curriculum)",
+        "icon": "route",
+        "category": "completion",
+        "criteria": json.dumps({"module_completion": {"any_module": True, "count": 9}}),
+        "progress_tracking": json.dumps({"completed_modules": 0, "target": 9}),
+        "points": 100,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Module Explorer",
+        "description": "Complete 5 different modules",
+        "icon": "compass",
+        "category": "completion",
+        "criteria": json.dumps({"module_completion": {"any_module": True, "count": 5}}),
+        "progress_tracking": json.dumps({"completed_modules": 0, "target": 5}),
+        "points": 50,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Dedicated Learner",
+        "description": "Complete 15 modules",
+        "icon": "graduation-cap",
+        "category": "completion",
+        "criteria": json.dumps({"module_completion": {"any_module": True, "count": 15}}),
+        "progress_tracking": json.dumps({"completed_modules": 0, "target": 15}),
+        "points": 200,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Curiosity Killed the Cat",
+        "description": "Complete your first module",
+        "icon": "lightbulb",
+        "category": "completion",
+        "criteria": json.dumps({"module_completion": {"any_module": True}}),
+        "progress_tracking": json.dumps({"completed_modules": 0, "target": 1}),
+        "points": 20,
+        "is_active": True,
+    })
+    achievement_id += 1
+    
+    achievements.append({
+        "id": achievement_id,
+        "name": "Consistent Performer",
+        "description": "Score 80% or higher on 5 different assessments",
+        "icon": "chart-bar",
+        "category": "score",
+        "criteria": json.dumps({"score_threshold": {"min_score": 80, "count": 5}}),
+        "progress_tracking": json.dumps({"high_scores": 0, "target": 5}),
+        "points": 75,
+        "is_active": True,
+    })
+    achievement_id += 1
 
     user_achievements = []
     logging.info("Prepared %s achievements", len(achievements))

@@ -5,6 +5,8 @@ import { useThemeMode } from '../contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { moduleService } from '../services/moduleService';
 import { assessmentService } from '../services/assessmentService';
+import { achievementService } from '../services/achievementService';
+import { AchievementBadge } from '../components/achievement/AchievementBadge';
 import type { Module } from '../types/module';
 import { ProgressStatus, type ModuleResultsResponse } from '../types/assessment';
 
@@ -18,6 +20,14 @@ export const ProgressPage: React.FC = () => {
   });
 
   const modules: Module[] = modulesQuery.data?.modules || [];
+
+  // Fetch achievements to show on completed modules
+  const achievementsQuery = useQuery({
+    queryKey: ['achievements'],
+    queryFn: () => achievementService.getAchievements(),
+  });
+
+  const achievements = achievementsQuery.data || [];
 
   // Fetch results per module
   const resultsQueries = useQuery({
@@ -119,16 +129,45 @@ export const ProgressPage: React.FC = () => {
                   ? Math.round((attempted / total) * 100)
                   : 0;
 
+            // Show subtle achievement badges on completed modules
+            // Filter to show completion/score achievements that are earned
+            const moduleAchievements = achievements
+              .filter((a) => {
+                if (!a.earned) return false;
+                // Show completion and score achievements (most relevant to module completion)
+                return a.category === 'completion' || a.category === 'score';
+              })
+              .slice(0, 2); // Limit to 2 badges to keep it subtle
+            const showAchievements = r?.progress_status === ProgressStatus.COMPLETED && moduleAchievements.length > 0;
+
             return (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.id}>
                 <Card className="glass-surface" sx={{ borderRadius: 3, height: '100%' }}>
                   <CardContent>
-                    <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 'bold', mb: 1 }}>
-                      {m.title}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255,255,255,0.7)' }}>
-                      {statusLabel}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 'bold', mb: 1 }}>
+                          {m.title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: mode === 'light' ? 'text.secondary' : 'rgba(255,255,255,0.7)' }}>
+                          {statusLabel}
+                        </Typography>
+                      </Box>
+                      {showAchievements && (
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                          {moduleAchievements.map((achievement) => (
+                            <AchievementBadge
+                              key={achievement.id}
+                              name={achievement.name}
+                              description={achievement.description}
+                              icon={achievement.icon}
+                              earned={achievement.earned}
+                              size="small"
+                            />
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
                     <Box sx={{ mt: 2 }}>
                       <LinearProgress variant="determinate" value={completionPercent} sx={{ height: 8, borderRadius: 1 }} />
                       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
