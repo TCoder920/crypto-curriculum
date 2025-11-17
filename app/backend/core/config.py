@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = 10
     ALLOWED_FILE_TYPES: str = "jpg,jpeg,png,pdf"
-    DOCUMENT_ALLOWED_TYPES: str = "pdf,docx,txt"
+    DOCUMENT_ALLOWED_TYPES: str = "pdf,docx,txt,jpg,jpeg,png,gif,webp"
     DOCUMENT_STORAGE_PATH: str = "storage/documents"
     
     class Config:

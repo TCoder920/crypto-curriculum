@@ -37,6 +37,7 @@ class ChatMessageCreate(BaseModel):
     message: str = Field(..., min_length=1, description="User message")
     conversation_id: Optional[int] = Field(None, description="Conversation ID (generated if not provided)")
     context: Optional[dict] = Field(None, description="Context about current module/lesson")
+    image_document_ids: Optional[List[int]] = Field(None, description="List of image document IDs to attach to the message")
 
 
 class ChatMessageResponse(BaseModel):

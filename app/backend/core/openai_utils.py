@@ -28,13 +28,14 @@ def get_openai_client() -> AsyncOpenAI:
     return _client
 
 
-async def get_or_create_user_assistant(user: User, db=None) -> str:
+async def get_or_create_user_assistant(user: User, db=None, vector_store_id: Optional[str] = None) -> str:
     """
     Get or create a user-specific OpenAI assistant.
     
     Args:
         user: User object
         db: Optional database session to save assistant_id
+        vector_store_id: Optional vector store ID to attach to assistant
     
     Returns:
         Assistant ID
@@ -44,19 +45,44 @@ async def get_or_create_user_assistant(user: User, db=None) -> str:
     # Check if user already has an assistant
     if user.openai_assistant_id:
         try:
-            # Verify assistant still exists
+            # Verify assistant still exists and update if vector store provided
             assistant = await client.beta.assistants.retrieve(user.openai_assistant_id)
+            
+            # Update assistant with vector store if provided and different
+            if vector_store_id:
+                tool_resources = {"file_search": {"vector_store_ids": [vector_store_id]}}
+                # Check if assistant needs update
+                current_tool_resources = getattr(assistant, 'tool_resources', None)
+                current_vs_ids = current_tool_resources.get("file_search", {}).get("vector_store_ids", []) if current_tool_resources else []
+                
+                if vector_store_id not in current_vs_ids:
+                    # Update assistant with file_search tool and vector store
+                    await client.beta.assistants.update(
+                        assistant.id,
+                        tools=[{"type": "file_search"}],
+                        tool_resources=tool_resources
+                    )
+                    logger.info(f"Updated assistant {assistant.id} with vector store {vector_store_id}")
+            
             return assistant.id
         except Exception as e:
             logger.warning(f"User assistant {user.openai_assistant_id} not found, creating new one: {e}")
     
+    # Prepare assistant configuration
+    assistant_config = {
+        "name": f"Learning Assistant for {user.username or user.email}",
+        "instructions": "You are a helpful learning assistant for blockchain and cryptocurrency education.",
+        "model": "gpt-4.1-mini",  # Using gpt-4.1-mini model
+        "tools": [],
+    }
+    
+    # Add file_search tool and vector store if provided
+    if vector_store_id:
+        assistant_config["tools"] = [{"type": "file_search"}]
+        assistant_config["tool_resources"] = {"file_search": {"vector_store_ids": [vector_store_id]}}
+    
     # Create new assistant
-    assistant = await client.beta.assistants.create(
-        name=f"Learning Assistant for {user.username or user.email}",
-        instructions="You are a helpful learning assistant for blockchain and cryptocurrency education.",
-        model="gpt-4.1-mini",  # Using gpt-4.1-mini model
-        tools=[],  # Can add tools like web search later
-    )
+    assistant = await client.beta.assistants.create(**assistant_config)
     
     # Store assistant ID in user model
     user.openai_assistant_id = assistant.id
@@ -181,13 +207,14 @@ async def get_global_assistant_id() -> Optional[str]:
         return None
 
 
-async def get_assistant_for_user(user: User, db=None) -> str:
+async def get_assistant_for_user(user: User, db=None, vector_store_id: Optional[str] = None) -> str:
     """
     Get assistant ID for user, falling back to global assistant if needed.
     
     Args:
         user: User object
         db: Optional database session
+        vector_store_id: Optional vector store ID to attach to assistant
     
     Returns:
         Assistant ID
@@ -201,7 +228,7 @@ async def get_assistant_for_user(user: User, db=None) -> str:
     # Otherwise, try to get or create user-specific assistant
     try:
         logger.info(f"Creating/getting user-specific assistant for user {user.id}")
-        return await get_or_create_user_assistant(user, db)
+        return await get_or_create_user_assistant(user, db, vector_store_id)
     except Exception as e:
         logger.error(f"Error getting user assistant: {e}", exc_info=True)
         # Try global assistant one more time as fallback
@@ -210,6 +237,18 @@ async def get_assistant_for_user(user: User, db=None) -> str:
             logger.warning(f"Falling back to global assistant due to error: {e}")
             return global_id
         raise ValueError(f"No assistant available. Error: {str(e)}. Please configure OPENAI_API_KEY. If using OPENAI_ASSISTANT_ID, ensure it exists in your OpenAI account.")
+
+
+def _is_image_file(file_path: Path) -> bool:
+    """Check if a file is an image based on extension."""
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
+    return file_path.suffix.lower() in image_extensions
+
+
+def _is_text_document(file_path: Path) -> bool:
+    """Check if a file is a text-based document suitable for vector store."""
+    text_extensions = {'.pdf', '.docx', '.txt', '.md', '.csv'}
+    return file_path.suffix.lower() in text_extensions
 
 
 async def _upload_file_to_openai(client: AsyncOpenAI, file_path: Path) -> Optional[str]:
@@ -251,13 +290,27 @@ async def update_vector_store(db: AsyncSession, user: User) -> Optional[str]:
         logger.warning("Unable to load documents for vector sync: %s", e)
         return vector_store_id
 
-    # Check currently attached files
+    # Check currently attached files (OpenAI max limit is 100 per request)
+    attached_file_ids = set()
     try:
-        vector_files = await client.beta.vector_stores.files.list(vector_store_id=vector_store_id, limit=1000)
+        # List files with max limit of 100
+        vector_files = await client.beta.vector_stores.files.list(
+            vector_store_id=vector_store_id,
+            limit=100
+        )
         attached_file_ids = {item.id for item in vector_files.data}
+        
+        # If there are more files, paginate (though unlikely for most users)
+        # Note: OpenAI API uses cursor-based pagination with 'after' parameter
+        while vector_files.has_more and vector_files.last_id:
+            vector_files = await client.beta.vector_stores.files.list(
+                vector_store_id=vector_store_id,
+                limit=100,
+                after=vector_files.last_id
+            )
+            attached_file_ids.update({item.id for item in vector_files.data})
     except Exception as e:
         logger.warning("Unable to list files for vector store %s: %s", vector_store_id, e)
-        attached_file_ids = set()
 
     desired_file_ids: set[str] = set()
     dirty = False
@@ -266,6 +319,17 @@ async def update_vector_store(db: AsyncSession, user: User) -> Optional[str]:
         file_path = Path(document.storage_path)
         if not file_path.exists():
             logger.warning("Document %s missing on disk at %s", document.id, document.storage_path)
+            continue
+
+        # Skip image files - they are not suitable for vector store file_search
+        # Images will be attached directly to messages when needed
+        if _is_image_file(file_path):
+            logger.debug("Skipping image file %s from vector store (images attached directly to messages)", file_path.name)
+            continue
+
+        # Only process text-based documents for vector store
+        if not _is_text_document(file_path):
+            logger.debug("Skipping non-text document %s from vector store", file_path.name)
             continue
 
         file_id = document.openai_file_id

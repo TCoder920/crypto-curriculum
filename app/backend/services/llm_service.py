@@ -20,6 +20,8 @@ from app.backend.services.context_service import gather_user_context
 from app.backend.models.user import User
 from app.backend.models.thread_map import ThreadMap
 from app.backend.models.query_log import QueryLog
+from app.backend.models.document import Document
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +89,53 @@ async def cancel_active_runs_for_thread(thread_id: str) -> None:
         logger.warning(f"Error cancelling active runs: {e}")
 
 
+async def _get_image_file_ids(
+    db: AsyncSession,
+    user: User,
+    image_document_ids: Optional[list[int]] = None,
+) -> list[str]:
+    """
+    Get OpenAI file IDs for image documents.
+    Uploads images to OpenAI if not already uploaded.
+    """
+    if not image_document_ids:
+        return []
+    
+    from app.backend.core.openai_utils import get_openai_client, _upload_file_to_openai, _is_image_file
+    
+    client = get_openai_client()
+    file_ids = []
+    
+    result = await db.execute(
+        select(Document)
+        .where(Document.id.in_(image_document_ids))
+        .where(Document.is_deleted == False)  # noqa: E712
+        .where(Document.uploader_id == user.id)  # Only user's own images
+    )
+    documents = result.scalars().all()
+    
+    for document in documents:
+        file_path = Path(document.storage_path)
+        if not file_path.exists() or not _is_image_file(file_path):
+            continue
+        
+        # Use existing OpenAI file ID if available
+        if document.openai_file_id:
+            file_ids.append(document.openai_file_id)
+            continue
+        
+        # Upload to OpenAI
+        file_id = await _upload_file_to_openai(client, file_path)
+        if file_id:
+            document.openai_file_id = file_id
+            file_ids.append(file_id)
+    
+    if file_ids:
+        await db.commit()
+    
+    return file_ids
+
+
 async def send_message(
     db: AsyncSession,
     user: User,
@@ -121,6 +170,9 @@ async def send_message(
     # Sanitize message
     sanitized_message = sanitize_message(message)
     
+    # Get image file IDs if provided
+    image_file_ids = await _get_image_file_ids(db, user, image_document_ids)
+    
     # Get or create thread
     thread_id = await get_or_create_thread(db, user, conversation_id)
     
@@ -143,43 +195,46 @@ async def send_message(
     # Format system prompt with context
     system_instructions = format_system_prompt_with_context(context)
 
-    # Sync vector store and prepare file search tool resources
-    tool_resources = None
+    # Sync vector store
+    vector_store_id = None
     try:
         vector_store_id = await update_vector_store(db, user)
-        if vector_store_id:
-            tool_resources = {"file_search": {"vector_store_ids": [vector_store_id]}}
     except Exception as e:
         logger.warning(f"Vector store sync failed for user {user.id}: {e}")
     
-    # Get user's assistant
+    # Get user's assistant (will attach vector store if available)
     try:
-        assistant_id = await get_assistant_for_user(user, db)
+        assistant_id = await get_assistant_for_user(user, db, vector_store_id)
     except Exception as e:
         logger.error(f"Failed to get assistant for user {user.id}: {e}")
         raise Exception(f"Failed to initialize AI assistant: {str(e)}")
+    
+    # Build message content (text + images)
+    message_content: list[Dict[str, Any]] = [{"type": "text", "text": sanitized_message}]
+    
+    # Add image file attachments if any
+    for file_id in image_file_ids:
+        message_content.append({"type": "image_file", "image_file": {"file_id": file_id}})
     
     # Add message to thread
     try:
         await client.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
-            content=sanitized_message
+            content=message_content if image_file_ids else sanitized_message
         )
     except Exception as e:
         logger.error(f"Failed to add message to thread {thread_id}: {e}")
         raise Exception(f"Failed to send message to AI: {str(e)}")
     
     # Create run with context in additional_instructions
+    # Note: tool_resources is set on the assistant, not on the run
     try:
-        run_params: Dict[str, Any] = {
-            "thread_id": thread_id,
-            "assistant_id": assistant_id,
-            "additional_instructions": system_instructions,
-        }
-        if tool_resources:
-            run_params["tool_resources"] = tool_resources
-        run = await client.beta.threads.runs.create(**run_params)
+        run = await client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant_id,
+            additional_instructions=system_instructions,
+        )
     except Exception as e:
         logger.error(f"Failed to create run for thread {thread_id}: {e}")
         raise Exception(f"Failed to start AI conversation: {str(e)}")
@@ -246,6 +301,7 @@ async def send_message_stream(
     current_lesson_id: Optional[int] = None,
     ip_address: Optional[str] = None,
     context_payload: Optional[Dict[str, Any]] = None,
+    image_document_ids: Optional[list[int]] = None,
 ) -> AsyncGenerator[str, None]:
     """
     Send a message and stream the response.
@@ -257,6 +313,9 @@ async def send_message_stream(
     
     # Sanitize message
     sanitized_message = sanitize_message(message)
+    
+    # Get image file IDs if provided
+    image_file_ids = await _get_image_file_ids(db, user, image_document_ids)
     
     # Get or create thread
     thread_id = await get_or_create_thread(db, user, conversation_id)
@@ -280,35 +339,37 @@ async def send_message_stream(
     # Format system prompt
     system_instructions = format_system_prompt_with_context(context)
 
-    # Sync vector store and prepare file-search tool resources
-    tool_resources = None
+    # Sync vector store
+    vector_store_id = None
     try:
         vector_store_id = await update_vector_store(db, user)
-        if vector_store_id:
-            tool_resources = {"file_search": {"vector_store_ids": [vector_store_id]}}
     except Exception as e:
         logger.warning(f"Vector store sync failed for user {user.id}: {e}")
     
-    # Get assistant
-    assistant_id = await get_assistant_for_user(user, db)
+    # Get assistant (will attach vector store if available)
+    assistant_id = await get_assistant_for_user(user, db, vector_store_id)
+    
+    # Build message content (text + images)
+    message_content: list[Dict[str, Any]] = [{"type": "text", "text": sanitized_message}]
+    
+    # Add image file attachments if any
+    for file_id in image_file_ids:
+        message_content.append({"type": "image_file", "image_file": {"file_id": file_id}})
     
     # Add message to thread
     await client.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
-        content=sanitized_message
+        content=message_content if image_file_ids else sanitized_message
     )
     
     # Create run
-    run_args: Dict[str, Any] = {
-        "thread_id": thread_id,
-        "assistant_id": assistant_id,
-        "additional_instructions": system_instructions,
-    }
-    if tool_resources:
-        run_args["tool_resources"] = tool_resources
-
-    run = await client.beta.threads.runs.create(**run_args)
+    # Note: tool_resources is set on the assistant, not on the run
+    run = await client.beta.threads.runs.create(
+        thread_id=thread_id,
+        assistant_id=assistant_id,
+        additional_instructions=system_instructions,
+    )
     
     # Stream response
     import asyncio

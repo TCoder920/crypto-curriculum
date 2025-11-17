@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Edit, ErrorOutline, Send, StopCircle } from '@mui/icons-material';
+import { Edit, ErrorOutline, Send, StopCircle, Image as ImageIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { TokenFadeTyper } from './TokenFadeTyper';
 import { aiService, type AIMessagePayload, type ConversationRecord } from '../../services/aiService';
+import { documentService } from '../../services/documentService';
 
 const TOKEN_LIMIT = 4000;
 const DEFAULT_MODEL = 'learning-assistant-v1';
@@ -17,6 +18,9 @@ export interface AIChatProps {
   navigateTo?: (path: string) => void;
   className?: string;
   onConversationChange?: (conversationId: number | null) => void;
+  availableImages?: Array<{ id: number; title: string; type?: string }>;
+  attachedImageIds?: number[];
+  onAttachedImagesChange?: (ids: number[]) => void;
 }
 
 interface ChatBubble {
@@ -39,6 +43,9 @@ export const AIChat: React.FC<AIChatProps> = ({
   navigateTo,
   className,
   onConversationChange,
+  availableImages = [],
+  attachedImageIds: externalAttachedImageIds = [],
+  onAttachedImagesChange,
 }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatBubble[]>(initialConversation ?? []);
@@ -48,6 +55,14 @@ export const AIChat: React.FC<AIChatProps> = ({
   const [isStopping, setIsStopping] = useState(false);
   const [conversationId, setConversationId] = useState<number | null>(initialConversationIdProp ?? null);
   const [collapseThreshold, setCollapseThreshold] = useState({ chars: 1200, tokens: 300 });
+  const [internalAttachedImageIds, setInternalAttachedImageIds] = useState<number[]>([]);
+  const [uploadingImages, setUploadingImages] = useState<Map<number, boolean>>(new Map());
+  const [uploadedImagePreviews, setUploadedImagePreviews] = useState<Map<number, { name: string; url: string }>>(new Map());
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // Use external attached images if callback provided (controlled), otherwise use internal state (uncontrolled)
+  const attachedImageIds = onAttachedImagesChange ? externalAttachedImageIds : internalAttachedImageIds;
+  const setAttachedImageIds = onAttachedImagesChange || setInternalAttachedImageIds;
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const abortStreamingRef = useRef<AbortController | null>(null);
@@ -249,6 +264,7 @@ export const AIChat: React.FC<AIChatProps> = ({
       model: DEFAULT_MODEL,
       conversationId,
       abortController,
+      imageDocumentIds: attachedImageIds.length > 0 ? attachedImageIds : undefined,
       onChunk: (content) => {
         setMessages((prev) =>
           prev.map((message) =>
@@ -271,6 +287,12 @@ export const AIChat: React.FC<AIChatProps> = ({
         finalizeStreamingMessage(finalText || placeholderMessage.text);
         setIsProcessing(false);
         abortStreamingRef.current = null;
+        // Clear attached images and previews after sending
+        setAttachedImageIds([]);
+        setUploadedImagePreviews((prev) => {
+          prev.forEach((preview) => URL.revokeObjectURL(preview.url));
+          return new Map();
+        });
         const activeConversationId = conversationIdRef.current;
         if (activeConversationId) {
           void refreshConversation(activeConversationId);
@@ -288,6 +310,78 @@ export const AIChat: React.FC<AIChatProps> = ({
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleImageUploadClick = () => {
+    imageInputRef.current?.click();
+  };
+
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const imageFiles = Array.from(files).filter((file) => {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+    });
+
+    if (imageFiles.length === 0) {
+      setError('Please select image files (jpg, png, gif, webp)');
+      return;
+    }
+
+    // Upload each image
+    for (const file of imageFiles) {
+      const tempId = Date.now() + Math.random(); // Temporary ID for preview
+      setUploadingImages((prev) => new Map(prev).set(tempId, true));
+      
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setUploadedImagePreviews((prev) => new Map(prev).set(tempId, { name: file.name, url: previewUrl }));
+
+      try {
+        const uploadedDoc = await documentService.uploadDocument(file);
+        // Replace temp ID with real document ID
+        setUploadingImages((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(tempId);
+          newMap.set(uploadedDoc.id, false);
+          return newMap;
+        });
+        setUploadedImagePreviews((prev) => {
+          const newMap = new Map(prev);
+          const preview = newMap.get(tempId);
+          if (preview) {
+            newMap.delete(tempId);
+            newMap.set(uploadedDoc.id, preview);
+          }
+          return newMap;
+        });
+        
+        // Add to attached images
+        setAttachedImageIds((ids) => [...ids, uploadedDoc.id]);
+        
+        // Revoke preview URL after a delay
+        setTimeout(() => URL.revokeObjectURL(previewUrl), 1000);
+      } catch (error: any) {
+        setError(error.response?.data?.detail || error.message || 'Failed to upload image');
+        setUploadingImages((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(tempId);
+          return newMap;
+        });
+        setUploadedImagePreviews((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(tempId);
+          return newMap;
+        });
+      }
+    }
+
+    // Reset file input
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
     }
   };
 
@@ -434,17 +528,108 @@ export const AIChat: React.FC<AIChatProps> = ({
 
       <div className="border-t border-white/40 px-4 py-4 dark:border-slate-700/70">
         <div className="mx-auto flex max-w-3xl flex-col gap-3">
+          {(attachedImageIds.length > 0 || uploadedImagePreviews.size > 0) && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-blue-200/50 bg-blue-50/50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Attached images:</p>
+              <div className="flex flex-wrap gap-2">
+                {Array.from(uploadedImagePreviews.entries()).map(([imageId, preview]) => {
+                  const isUploading = uploadingImages.get(imageId);
+                  return (
+                    <div
+                      key={imageId}
+                      className="group relative inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white p-2 text-xs dark:border-blue-700 dark:bg-slate-800"
+                    >
+                      {isUploading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                          <span className="text-slate-500">Uploading...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <img
+                            src={preview.url}
+                            alt={preview.name}
+                            className="h-8 w-8 rounded object-cover"
+                          />
+                          <span className="max-w-[120px] truncate text-slate-700 dark:text-slate-200">{preview.name}</span>
+                          <button
+                            onClick={() => {
+                              setAttachedImageIds((ids) => ids.filter((id) => id !== imageId));
+                              setUploadedImagePreviews((prev) => {
+                                const newMap = new Map(prev);
+                                const prevData = newMap.get(imageId);
+                                if (prevData) URL.revokeObjectURL(prevData.url);
+                                newMap.delete(imageId);
+                                return newMap;
+                              });
+                            }}
+                            className="text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400"
+                            aria-label="Remove image"
+                          >
+                            ×
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                {attachedImageIds
+                  .filter((id) => !uploadedImagePreviews.has(id))
+                  .map((imageId) => {
+                    const image = availableImages.find((img) => img.id === imageId);
+                    return (
+                      <div
+                        key={imageId}
+                        className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-xs dark:border-blue-700 dark:bg-slate-800"
+                      >
+                        <span className="text-slate-700 dark:text-slate-200">{image?.title || `Image ${imageId}`}</span>
+                        <button
+                          onClick={() => setAttachedImageIds((ids) => ids.filter((id) => id !== imageId))}
+                          className="text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400"
+                          aria-label="Remove image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
           <div className="relative flex items-center gap-3 rounded-3xl border border-slate-200/80 bg-white/85 px-4 py-3 shadow-inner transition focus-within:border-blue-400 dark:border-slate-700 dark:bg-slate-800/70">
-          <textarea
-            ref={textareaRef}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              multiple
+              onChange={handleImageSelect}
+              className="hidden"
+              disabled={isProcessing}
+            />
+            <button
+              onClick={handleImageUploadClick}
+              disabled={isProcessing}
+              className={clsx(
+                'inline-flex h-10 w-10 items-center justify-center rounded-full transition',
+                isProcessing
+                  ? 'cursor-not-allowed opacity-50 text-slate-400'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+              )}
+              aria-label="Upload image"
+              title="Upload image"
+            >
+              <ImageIcon fontSize="small" />
+            </button>
+            <textarea
+              ref={textareaRef}
               className="max-h-48 w-full resize-none bg-transparent text-base leading-relaxed text-left text-slate-800 outline-none placeholder:text-slate-400 dark:text-white"
               placeholder="Type your question or prompt here..."
-            value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
-            onKeyDown={handleKeyPress}
-            disabled={isProcessing}
-            rows={1}
-          />
+              value={inputValue}
+              onChange={(event) => setInputValue(event.target.value)}
+              onKeyDown={handleKeyPress}
+              disabled={isProcessing}
+              rows={1}
+            />
             <div className="flex items-center gap-3">
               {isProcessing && (
                 <button

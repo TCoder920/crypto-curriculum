@@ -16,6 +16,7 @@ export interface StreamingConfig {
   onError: (message: string) => void;
   onComplete: (finalText: string) => void;
   onNewConversationId?: (conversationId: number) => void;
+  imageDocumentIds?: number[];
 }
 
 export interface ConversationMessage {
@@ -82,6 +83,7 @@ export const aiService = {
     onError,
     onComplete,
     onNewConversationId,
+    imageDocumentIds,
   }: StreamingConfig): Promise<void> {
     const token = localStorage.getItem('access_token');
     const headers: HeadersInit = {
@@ -104,6 +106,7 @@ export const aiService = {
             model,
             facility_type: facilityType,
           },
+          image_document_ids: imageDocumentIds && imageDocumentIds.length > 0 ? imageDocumentIds : undefined,
         }),
         signal: abortController.signal,
       });

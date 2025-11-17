@@ -68,6 +68,7 @@ async def chat_with_assistant(
             current_lesson_id=current_lesson_id,
             ip_address=ip_address,
             context_payload=context,
+            image_document_ids=chat_data.image_document_ids,
         )
         
         response_text = result["response"]
@@ -160,6 +161,7 @@ async def chat_with_assistant_stream(
                     current_lesson_id=current_lesson_id,
                     ip_address=ip_address,
                     context_payload=context,
+                    image_document_ids=chat_data.image_document_ids,
                 ):
                     full_response += chunk
                     yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
